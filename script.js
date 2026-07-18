@@ -10,7 +10,9 @@ const state = {
     budget: 'medium',
     travelers: 2,
     packingList: [],
-    customItems: []
+    customItems: [],
+    activeDestination: null,
+    activeIsRealAI: false
 };
 
 // --- Destination & Itinerary Database ---
@@ -705,6 +707,7 @@ const elements = {
     btnErrorRetry: document.getElementById('btn-error-retry'),
     resultsContainer: document.getElementById('results-container'),
     
+    destImage: document.getElementById('destination-image'),
     destName: document.getElementById('dest-name'),
     destType: document.getElementById('dest-type'),
     destDescription: document.getElementById('dest-description'),
@@ -729,7 +732,18 @@ const elements = {
     addItemForm: document.getElementById('add-item-form'),
     customItemInput: document.getElementById('custom-item-input'),
     customItemCategory: document.getElementById('custom-item-category'),
-    btnAddItem: document.getElementById('btn-add-item')
+    btnAddItem: document.getElementById('btn-add-item'),
+    
+    themeToggleBtn: document.getElementById('theme-toggle'),
+    savedTripsList: document.getElementById('saved-trips-list'),
+    btnSaveItinerary: document.getElementById('btn-save-itinerary'),
+    btnDownloadPdf: document.getElementById('btn-download-pdf'),
+    
+    converterAmount: document.getElementById('converter-amount'),
+    converterFrom: document.getElementById('converter-from'),
+    converterTo: document.getElementById('converter-to'),
+    btnConvert: document.getElementById('btn-convert'),
+    converterResult: document.getElementById('converter-result')
 };
 
 // --- Initializing App Event Listeners ---
@@ -808,6 +822,35 @@ function init() {
         localStorage.setItem('gemini_api_key', e.target.value.trim());
     });
     elements.btnErrorRetry.addEventListener('click', generateItinerary);
+
+    // 9. Light/Dark Theme Toggle
+    const currentTheme = localStorage.getItem('theme') || 'dark';
+    if (currentTheme === 'light') {
+        document.body.classList.add('light-theme');
+    }
+    if (elements.themeToggleBtn) {
+        elements.themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light-theme');
+            const theme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+            localStorage.setItem('theme', theme);
+        });
+    }
+
+    // 10. Saved Itineraries Action Event Listeners
+    if (elements.btnSaveItinerary) {
+        elements.btnSaveItinerary.addEventListener('click', saveCurrentItinerary);
+    }
+    if (elements.btnDownloadPdf) {
+        elements.btnDownloadPdf.addEventListener('click', downloadPDF);
+    }
+
+    // 11. Initial Saved Trips Load
+    renderSavedTrips();
+
+    // 12. Currency Converter Action Listener
+    if (elements.btnConvert) {
+        elements.btnConvert.addEventListener('click', convertCurrency);
+    }
 }
 
 // --- Loading Simulation & Generator Logic ---
@@ -846,8 +889,17 @@ function generateItinerary() {
     if (!apiKey) {
         // Fallback to Demo Mode (offline lookup)
         console.log("No API Key found. Running in Offline Demo Mode.");
+        elements.btnGenerate.disabled = true;
+        elements.btnGenerate.classList.add('loading');
+        const btnText = elements.btnGenerate.querySelector('.btn-text');
+        if (btnText) btnText.innerHTML = `<span class="loader-spinner"></span> Generating...`;
+
         setTimeout(() => {
             clearInterval(loadingInterval);
+            
+            elements.btnGenerate.disabled = false;
+            elements.btnGenerate.classList.remove('loading');
+            if (btnText) btnText.textContent = "Generate AI Itinerary";
             
             const category = state.vibe;
             const budgetLevel = state.budget;
@@ -867,6 +919,12 @@ function generateItinerary() {
     const travelers = state.travelers;
     const duration = state.duration;
 
+    // Enable generating loading state on button
+    elements.btnGenerate.disabled = true;
+    elements.btnGenerate.classList.add('loading');
+    const btnText = elements.btnGenerate.querySelector('.btn-text');
+    if (btnText) btnText.innerHTML = `<span class="loader-spinner"></span> Generating...`;
+
     const promptText = `Generate a detailed, custom travel itinerary for a trip with the following preferences:
 - Vibe/Theme: ${category} (options: beach, hill, adventure, historical)
 - Duration: ${duration} days (your output 'days' array MUST contain exactly ${duration} items)
@@ -881,7 +939,18 @@ Provide realistic daily rates (average cost per person per day in USD) for:
 - fun
 
 Provide a matching short, actionable savings/advice tip.
-Provide a tailored packing list containing 5 custom items specific to this destination and season/weather (e.g. for adventure, specific hiking gear; for cold weather, thermal base layers).`;
+Provide a tailored packing list containing 5 custom items specific to this destination and season/weather.
+
+For each day in the itinerary, provide:
+- title: a descriptive title for the day.
+- morning: morning activities.
+- afternoon: afternoon activities.
+- evening: evening activities.
+- attractions: an array of 2-3 specific sightseeing/attraction spots.
+- restaurants: an array of 1-2 suggested restaurants or dining locations.
+- localFood: an array of 1-2 local dishes, snacks, or specialties to try that day.
+- travelTips: an array of 1-2 helpful tips specific to that day's logistics or places.
+- estimatedCost: an estimated overall dollar amount in USD for one person's activities, transit, and food for that day (excluding stay).`;
 
     const requestBody = {
         contents: [{
@@ -916,9 +985,26 @@ Provide a tailored packing list containing 5 custom items specific to this desti
                                 title: { type: "STRING" },
                                 morning: { type: "STRING" },
                                 afternoon: { type: "STRING" },
-                                evening: { type: "STRING" }
+                                evening: { type: "STRING" },
+                                attractions: {
+                                    type: "ARRAY",
+                                    items: { type: "STRING" }
+                                },
+                                restaurants: {
+                                    type: "ARRAY",
+                                    items: { type: "STRING" }
+                                },
+                                localFood: {
+                                    type: "ARRAY",
+                                    items: { type: "STRING" }
+                                },
+                                travelTips: {
+                                    type: "ARRAY",
+                                    items: { type: "STRING" }
+                                },
+                                estimatedCost: { type: "INTEGER" }
                             },
-                            required: ["title", "morning", "afternoon", "evening"]
+                            required: ["title", "morning", "afternoon", "evening", "attractions", "restaurants", "localFood", "travelTips", "estimatedCost"]
                         }
                     },
                     packingList: {
@@ -969,7 +1055,27 @@ Provide a tailored packing list containing 5 custom items specific to this desti
         console.error("Gemini Generation Error:", err);
         elements.loadingState.classList.add('hidden');
         elements.errorState.classList.remove('hidden');
-        elements.errorMessage.textContent = err.message || "An unexpected error occurred. Please verify your API Key and connection.";
+        
+        // Re-enable generate button
+        elements.btnGenerate.disabled = false;
+        elements.btnGenerate.classList.remove('loading');
+        const btnText = elements.btnGenerate.querySelector('.btn-text');
+        if (btnText) btnText.textContent = "Generate AI Itinerary";
+        
+        let userMessage = "An unexpected error occurred. Please verify your API Key and connection.";
+        const errMsg = err.message || "";
+        
+        if (errMsg.toLowerCase().includes("failed to fetch") || errMsg.toLowerCase().includes("networkerror")) {
+            userMessage = "Network Connection Error: Unable to reach Gemini API. Please check your internet connection and verify that Google services are accessible in your region.";
+        } else if (errMsg.toLowerCase().includes("api key") || errMsg.toLowerCase().includes("not valid") || errMsg.toLowerCase().includes("invalid")) {
+            userMessage = "Invalid API Key: The provided Gemini API Key is invalid or expired. Please check your API key from Google AI Studio and enter it again.";
+        } else if (errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("limit")) {
+            userMessage = "API Limit Exceeded: You have reached your Gemini API quota limit. Please wait a minute or try using another key.";
+        } else if (errMsg) {
+            userMessage = `Gemini API Error: ${errMsg}`;
+        }
+        
+        elements.errorMessage.textContent = userMessage;
         if (window.innerWidth < 1024) {
             elements.errorState.scrollIntoView({ behavior: 'smooth' });
         }
@@ -977,6 +1083,23 @@ Provide a tailored packing list containing 5 custom items specific to this desti
 }
 
 function finishGeneration(destination, isRealAI = false) {
+    // Save generated trip to active state
+    state.activeDestination = destination;
+    state.activeIsRealAI = isRealAI;
+
+    // Re-enable generate button
+    elements.btnGenerate.disabled = false;
+    elements.btnGenerate.classList.remove('loading');
+    const btnText = elements.btnGenerate.querySelector('.btn-text');
+    if (btnText) btnText.textContent = "Generate AI Itinerary";
+
+    // Reset Save button active state indicator if any
+    const btnSave = document.getElementById('btn-save-itinerary');
+    if (btnSave) {
+        btnSave.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> <span>Save Itinerary</span>`;
+        btnSave.classList.remove('saved-active');
+    }
+
     // 1. Hide Loader and Error States
     elements.loadingState.classList.add('hidden');
     elements.errorState.classList.add('hidden');
@@ -990,6 +1113,11 @@ function finishGeneration(destination, isRealAI = false) {
     elements.destType.innerHTML = isRealAI ? `✨ Gemini AI: ${destination.badge}` : destination.badge;
     elements.destDescription.textContent = destination.description;
     
+    const cityName = destination.name.split(',')[0].trim();
+    if (elements.destImage) {
+        elements.destImage.src = `https://loremflickr.com/1200/600/travel,${encodeURIComponent(cityName)}`;
+    }
+    
     // Render Quick Stats
     elements.statDuration.textContent = state.duration === 1 ? '1 Day' : `${state.duration} Days`;
     elements.statTravelers.textContent = state.travelers === 1 ? '1 Traveler' : `${state.travelers} Travelers`;
@@ -998,7 +1126,7 @@ function finishGeneration(destination, isRealAI = false) {
     elements.statBudget.textContent = budgetLabels[budgetLevel];
 
     // 4. Render Day Itineraries
-    renderItinerary(destination.days);
+    renderItinerary(destination.days, destination.name);
 
     // 5. Calculate & Render Budget
     calculateBudget(destination.dailyRates, destination.tips);
@@ -1020,9 +1148,10 @@ function finishGeneration(destination, isRealAI = false) {
 // --- Component Rendering functions ---
 
 // 1. Render Itineraries dynamically
-function renderItinerary(daysPool) {
+function renderItinerary(daysPool, destinationName) {
     elements.itineraryContent.innerHTML = '';
     const numDays = state.duration;
+    const cityName = destinationName ? destinationName.split(',')[0].trim() : 'travel';
     
     for (let d = 1; d <= numDays; d++) {
         // Find or build a day
@@ -1073,6 +1202,9 @@ function renderItinerary(daysPool) {
             </div>
             <div class="day-content">
                 <div class="day-content-inner">
+                    <div class="day-img-container">
+                        <img src="https://loremflickr.com/800/400/travel,${encodeURIComponent(cityName)}?lock=${d}" alt="${cityName}" class="day-img" loading="lazy">
+                    </div>
                     <div class="activity-item">
                         <div class="activity-time">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1113,6 +1245,48 @@ function renderItinerary(daysPool) {
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.443.263 2.443 1.542v.18c0 .502-.409.91-1.026.98l-1.085.12c-.521.058-.916.486-.916 1.01v.008c0 .49.37.91.869.954l.069.006c.465.04 1.01.215 1.488.665.318.3.498.718.498 1.155v.006c0 .888-.797 1.62-1.68 1.535l-.048-.004c-.382-.034-.73-.243-.956-.554l-.062-.086a1.225 1.225 0 01-.19-.893l.115-.812a.375.375 0 00-.317-.424l-.168-.023c-.352-.05-.62-.352-.62-.708v-.002c0-.52.404-.948.924-.99l.066-.005a2.22 2.22 0 001.378-3.327l-.053-.08a1.225 1.225 0 01.19-.894l.812-.115a.375.375 0 00.424-.317l.023-.168c.05-.352.352-.62.708-.62h.002zm1.611-3.693a1.125 1.125 0 11-2.25 0 1.125 1.125 0 012.25 0z" clip-rule="evenodd" /></svg>
                                 <span>Try seeking out locally recommended eateries on this street block!</span>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Attractions, Local Food, Cost, & Tips Grid -->
+                    <div class="day-details-grid">
+                        <div class="day-detail-block">
+                            <div class="day-detail-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <span>Key Attractions</span>
+                            </div>
+                            <div class="day-detail-tags">
+                                ${(dayData.attractions || ["Local Sights"]).map(attr => `<span class="day-detail-tag">${attr}</span>`).join('')}
+                            </div>
+                        </div>
+
+                        <div class="day-detail-block">
+                            <div class="day-detail-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                <span>Estimated Cost</span>
+                            </div>
+                            <span class="day-detail-cost">$${dayData.estimatedCost || 15} USD</span>
+                        </div>
+                    </div>
+
+                    <div class="day-details-grid">
+                        <div class="day-detail-block">
+                            <div class="day-detail-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                <span>Dining & Local Food</span>
+                            </div>
+                            <p class="day-detail-text">
+                                <strong>Food:</strong> ${(dayData.localFood || ["Traditional Food"]).join(', ')} <br>
+                                <strong>Eat at:</strong> ${(dayData.restaurants || ["Cozy Dining Spot"]).join(', ')}
+                            </p>
+                        </div>
+
+                        <div class="day-detail-block">
+                            <div class="day-detail-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                <span>Day Wise Tip</span>
+                            </div>
+                            <p class="day-detail-text">${(dayData.travelTips || ["Stay hydrated and enjoy your day!"]).join(' ')}</p>
                         </div>
                     </div>
                 </div>
@@ -1340,3 +1514,247 @@ function updatePackingProgress() {
 
 // Start operations on DOM loaded
 document.addEventListener('DOMContentLoaded', init);
+
+// --- Extended Feature Helper Functions ---
+
+function saveCurrentItinerary() {
+    if (!state.activeDestination) return;
+    
+    // Get existing saved itineraries
+    const saved = JSON.parse(localStorage.getItem('saved_itineraries') || '[]');
+    
+    // Check if it already exists (by name and duration)
+    const exists = saved.some(item => item.name === state.activeDestination.name && item.duration === state.duration);
+    if (exists) {
+        alert("This itinerary is already saved!");
+        return;
+    }
+    
+    // Add current itinerary to list
+    const newSaved = {
+        id: 'trip_' + Date.now(),
+        name: state.activeDestination.name,
+        badge: state.activeDestination.badge,
+        description: state.activeDestination.description,
+        vibe: state.vibe,
+        duration: state.duration,
+        budget: state.budget,
+        travelers: state.travelers,
+        dailyRates: state.activeDestination.dailyRates,
+        tips: state.activeDestination.tips,
+        days: state.activeDestination.days,
+        packingList: state.activeDestination.packingList,
+        isRealAI: state.activeIsRealAI,
+        dateSaved: new Date().toLocaleDateString()
+    };
+    
+    saved.push(newSaved);
+    localStorage.setItem('saved_itineraries', JSON.stringify(saved));
+    
+    // Animate save button or update label
+    const btn = document.getElementById('btn-save-itinerary');
+    if (btn) {
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> <span>Saved!</span>`;
+        btn.classList.add('saved-active');
+        setTimeout(() => {
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> <span>Save Itinerary</span>`;
+            btn.classList.remove('saved-active');
+        }, 2000);
+    }
+    
+    renderSavedTrips();
+}
+
+function renderSavedTrips() {
+    const listContainer = document.getElementById('saved-trips-list');
+    if (!listContainer) return;
+    
+    const saved = JSON.parse(localStorage.getItem('saved_itineraries') || '[]');
+    listContainer.innerHTML = '';
+    
+    if (saved.length === 0) {
+        listContainer.innerHTML = `
+            <div class="saved-trips-empty">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8v4l3 3"/>
+                </svg>
+                <p>No saved trips yet. Plan a trip and click 'Save Itinerary' to keep it here.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    saved.forEach(trip => {
+        const item = document.createElement('div');
+        item.className = 'saved-trip-item';
+        
+        item.innerHTML = `
+            <div class="saved-trip-info" onclick="loadSavedTrip('${trip.id}')">
+                <h4>${trip.name}</h4>
+                <p>${trip.vibe.charAt(0).toUpperCase() + trip.vibe.slice(1)} • ${trip.duration} Days • ${trip.dateSaved}</p>
+            </div>
+            <div class="saved-trip-actions">
+                <button type="button" class="saved-trip-delete-btn" onclick="deleteSavedTrip('${trip.id}')" title="Delete Saved Trip">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.34 6m-4.78 0L9 9m11 4a12 12 0 1 1-24 0 12 12 0 0 1 24 0ZM9.75 21h4.5a1.5 1.5 0 0 0 1.5-1.5v-11a1.5 1.5 0 0 0-1.5-1.5h-4.5A1.5 1.5 0 0 0 8.25 8.5v11A1.5 1.5 0 0 0 9.75 21Z" />
+                    </svg>
+                </button>
+            </div>
+        `;
+        listContainer.appendChild(item);
+    });
+}
+
+window.loadSavedTrip = function(id) {
+    const saved = JSON.parse(localStorage.getItem('saved_itineraries') || '[]');
+    const trip = saved.find(t => t.id === id);
+    if (!trip) return;
+    
+    // Set global app state to match this trip
+    state.vibe = trip.vibe;
+    state.duration = trip.duration;
+    state.budget = trip.budget;
+    state.travelers = trip.travelers;
+    
+    // Update inputs to match loaded state
+    elements.vibeCards.forEach(c => {
+        c.classList.remove('active');
+        if (c.dataset.vibe === trip.vibe) c.classList.add('active');
+    });
+    
+    elements.durationSlider.value = trip.duration;
+    elements.durationVal.textContent = trip.duration === 1 ? '1 Day' : `${trip.duration} Days`;
+    
+    elements.budgetBtns.forEach(b => {
+        b.classList.remove('active');
+        if (b.dataset.budget === trip.budget) b.classList.add('active');
+    });
+    
+    elements.travelersCount.textContent = trip.travelers;
+    
+    // Populate active destination state
+    state.activeDestination = trip;
+    state.activeIsRealAI = trip.isRealAI;
+    
+    // Hide welcome state
+    elements.emptyState.classList.add('hidden');
+    elements.resultsContainer.classList.remove('hidden');
+    elements.errorState.classList.add('hidden');
+    elements.loadingState.classList.add('hidden');
+
+    // Call finishGeneration to render it in the results pane
+    finishGeneration(trip, trip.isRealAI);
+    
+    // Scroll results into view on mobile
+    if (window.innerWidth < 1024) {
+        elements.resultsContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+};
+
+window.deleteSavedTrip = function(id) {
+    let saved = JSON.parse(localStorage.getItem('saved_itineraries') || '[]');
+    saved = saved.filter(t => t.id !== id);
+    localStorage.setItem('saved_itineraries', JSON.stringify(saved));
+    renderSavedTrips();
+};
+
+function downloadPDF() {
+    if (!state.activeDestination) return;
+    
+    const element = document.getElementById('results-container');
+    if (!element) return;
+    
+    // Add temporary styling class for printing
+    document.body.classList.add('pdf-printing');
+    
+    const opt = {
+        margin:       [10, 10, 10, 10],
+        filename:     `VoyageAI_Itinerary_${state.activeDestination.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { 
+            scale: 2, 
+            useCORS: true, 
+            backgroundColor: document.body.classList.contains('light-theme') ? '#ffffff' : '#070a13' 
+        },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    html2pdf().from(element).set(opt).save().then(() => {
+        document.body.classList.remove('pdf-printing');
+    }).catch(err => {
+        console.error("PDF generation failed:", err);
+        document.body.classList.remove('pdf-printing');
+        alert("Failed to download PDF. Please try again.");
+    });
+}
+
+async function convertCurrency() {
+    const amountInput = elements.converterAmount;
+    const fromSelect = elements.converterFrom;
+    const toSelect = elements.converterTo;
+    const resultBox = elements.converterResult;
+    const btnConvert = elements.btnConvert;
+    
+    if (!amountInput || !fromSelect || !toSelect || !resultBox || !btnConvert) return;
+    
+    const amount = parseFloat(amountInput.value);
+    if (isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid amount greater than 0");
+        return;
+    }
+    
+    const from = fromSelect.value;
+    const to = toSelect.value;
+    
+    if (from === to) {
+        resultBox.classList.remove('hidden');
+        resultBox.className = 'converter-result-box';
+        resultBox.innerHTML = `
+            <div class="result-detail">${amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${from} =</div>
+            <div class="result-main">${amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${to}</div>
+            <div class="result-rate">1 ${from} = 1.0000 ${to}</div>
+        `;
+        return;
+    }
+    
+    // Disable Convert button
+    btnConvert.disabled = true;
+    const originalBtnText = btnConvert.innerHTML;
+    btnConvert.innerHTML = `<span class="loader-spinner"></span> Converting...`;
+    resultBox.classList.add('hidden');
+    
+    try {
+        const response = await fetch(`https://api.frankfurter.app/latest?amount=${amount}&from=${from}&to=${to}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        
+        const converted = data.rates[to];
+        if (converted === undefined) {
+            throw new Error("Target rate not found in API response");
+        }
+        
+        const rate = converted / amount;
+        
+        resultBox.classList.remove('hidden');
+        resultBox.className = 'converter-result-box';
+        resultBox.innerHTML = `
+            <div class="result-detail">${amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${from} =</div>
+            <div class="result-main">${converted.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${to}</div>
+            <div class="result-rate">1 ${from} = ${rate.toFixed(4)} ${to}</div>
+        `;
+    } catch (err) {
+        console.error("Currency Conversion Error:", err);
+        resultBox.classList.remove('hidden');
+        resultBox.className = 'converter-result-box error-result';
+        resultBox.innerHTML = `
+            <div class="error-title">Conversion Failed</div>
+            <div class="error-desc">Unable to fetch live exchange rates. Please verify your internet connection and try again.</div>
+        `;
+    } finally {
+        btnConvert.disabled = false;
+        btnConvert.innerHTML = originalBtnText;
+    }
+}
