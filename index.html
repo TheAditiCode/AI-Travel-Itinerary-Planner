@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoyageAI - AI Travel Itinerary Planner</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="plane-icon">
+                        <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-1.1.1-1.3.6l-.3.7c-.2.5 0 1 .4 1.3L9 12l-4 4H3l-2 2h3l2-2h4l4 5.4c.3.4.8.6 1.3.4l.7-.3c.5-.2.7-.8.6-1.3z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1>Voyage<span>AI</span></h1>
+                    <p class="subtitle">Next-Gen Travel Planner</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="vibe-mode">
+                    <span>✨ Dynamic AI Engine</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <main class="main-layout">
+            <!-- Left Panel: Input Form -->
+            <section class="planner-form-section">
+                <div class="card form-card">
+                    <div class="card-header">
+                        <h2>Plan Your Escape</h2>
+                        <p>Fill in your preferences to generate a personalized itinerary</p>
+                    </div>
+
+                    <form id="itinerary-form" onsubmit="event.preventDefault();">
+                        <!-- Gemini API Key Section -->
+                        <div class="form-group">
+                            <label class="form-label" for="api-key-input">Gemini API Key</label>
+                            <input type="password" id="api-key-input" placeholder="AIzaSy... (Paste key here)" class="form-input">
+                            <p class="counter-subtext" style="margin-top: 6px;">Keys are stored locally. Get one free from <a href="https://aistudio.google.com/" target="_blank" style="color: var(--color-primary); text-decoration: underline;">Google AI Studio</a>. Leave blank for Demo Mode.</p>
+                        </div>
+
+                        <!-- Preferences / Vibe Section -->
+                        <div class="form-group">
+                            <label class="form-label">Choose Your Vibe</label>
+                            <div class="vibe-grid">
+                                <div class="vibe-card active" data-vibe="beach">
+                                    <div class="vibe-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                                            <path d="M22 22a2 2 0 0 0-2-2 2 2 0 0 0-2 2M14 22a2 2 0 0 0-2-2 2 2 0 0 0-2 2M6 22a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/>
+                                            <path d="M18 12a6 6 0 1 0-12 0"/>
+                                        </svg>
+                                    </div>
+                                    <span>Beach</span>
+                                </div>
+                                <div class="vibe-card" data-vibe="hill">
+                                    <div class="vibe-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="m8 3 4 8 5-5 5 15H2L8 3z"/>
+                                            <path d="M4.14 15.08c2.62-1.57 5.24-1.43 7.86.42 2.62 1.85 5.24 1.71 7.86-.42"/>
+                                        </svg>
+                                    </div>
+                                    <span>Hill Station</span>
+                                </div>
+                                <div class="vibe-card" data-vibe="adventure">
+                                    <div class="vibe-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 22l6-6M19.875 6.125a2.293 2.293 0 0 0-3.25 0l-1.625 1.625 4.875 4.875 1.625-1.625a2.293 2.293 0 0 0 0-3.25z"/>
+                                        </svg>
+                                    </div>
+                                    <span>Adventure</span>
+                                </div>
+                                <div class="vibe-card" data-vibe="historical">
+                                    <div class="vibe-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                            <path d="M12 2v9M8 5h8M8 8h8"/>
+                                            <path d="M7 11V8M17 11V8"/>
+                                        </svg>
+                                    </div>
+                                    <span>Historical</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Duration Section -->
+                        <div class="form-group">
+                            <div class="label-with-value">
+                                <label class="form-label" for="duration-slider">Duration</label>
+                                <span id="duration-val" class="badge-value">5 Days</span>
+                            </div>
+                            <div class="range-container">
+                                <input type="range" id="duration-slider" class="range-slider" min="1" max="14" value="5">
+                                <div class="range-labels">
+                                    <span>1 Day</span>
+                                    <span>7 Days</span>
+                                    <span>14 Days</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Budget Section -->
+                        <div class="form-group">
+                            <label class="form-label">Budget Level</label>
+                            <div class="budget-selector">
+                                <button type="button" class="budget-btn" data-budget="low">
+                                    <span class="budget-symbol">$</span>
+                                    <div class="budget-meta">
+                                        <span class="budget-title">Budget</span>
+                                        <span class="budget-desc">Backpacker, hostels</span>
+                                    </div>
+                                </button>
+                                <button type="button" class="budget-btn active" data-budget="medium">
+                                    <span class="budget-symbol">$$</span>
+                                    <div class="budget-meta">
+                                        <span class="budget-title">Standard</span>
+                                        <span class="budget-desc">Comfortable hotels</span>
+                                    </div>
+                                </button>
+                                <button type="button" class="budget-btn" data-budget="high">
+                                    <span class="budget-symbol">$$$</span>
+                                    <div class="budget-meta">
+                                        <span class="budget-title">Luxury</span>
+                                        <span class="budget-desc">High-end resorts</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Travelers Counter -->
+                        <div class="form-group">
+                            <div class="counter-container">
+                                <div class="counter-label-group">
+                                    <label class="form-label" style="margin-bottom: 0;">Travelers</label>
+                                    <p class="counter-subtext">Number of people traveling</p>
+                                </div>
+                                <div class="counter-control">
+                                    <button type="button" class="counter-btn" id="btn-decrement">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="5" y1="12" x2="19" y2="12"/>
+                                        </svg>
+                                    </button>
+                                    <span id="travelers-count" class="counter-value">2</span>
+                                    <button type="button" class="counter-btn" id="btn-increment">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="12" y1="5" x2="12" y2="19"/>
+                                            <line x1="5" y1="12" x2="19" y2="12"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="button" id="btn-generate" class="btn btn-primary btn-block">
+                            <span class="btn-text">Generate AI Itinerary</span>
+                            <span class="btn-glow-effect"></span>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Right Panel: Results & Outputs -->
+            <section class="planner-results-section">
+                <!-- Welcome/Empty State -->
+                <div class="card empty-state-card" id="empty-state">
+                    <div class="empty-state-graphic">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+                        </svg>
+                    </div>
+                    <h3>Start Your Next Journey</h3>
+                    <p>Select your traveler settings on the left and hit the generate button. Our AI will curate an ideal destination, customized daily itinerary, precise budget forecast, and a comprehensive packing checklist for you.</p>
+                </div>
+
+                <!-- Loading State -->
+                <div class="card loading-card hidden" id="loading-state">
+                    <div class="loader-animation">
+                        <div class="loader-ring"></div>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="loader-plane">
+                            <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-1.1.1-1.3.6l-.3.7c-.2.5 0 1 .4 1.3L9 12l-4 4H3l-2 2h3l2-2h4l4 5.4c.3.4.8.6 1.3.4l.7-.3c.5-.2.7-.8.6-1.3z"/>
+                        </svg>
+                    </div>
+                    <h3 id="loading-title">Analyzing Destination Database...</h3>
+                    <p id="loading-subtitle">Cross-referencing travel constraints and optimal routes.</p>
+                </div>
+
+                <!-- Error State -->
+                <div class="card error-card hidden" id="error-state">
+                    <div class="error-state-graphic">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="error-icon">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                    </div>
+                    <h3>Generation Failed</h3>
+                    <p id="error-message">Something went wrong while communicating with Gemini. Please check your API key and connection.</p>
+                    <button type="button" class="btn btn-secondary" id="btn-error-retry" style="margin-top: 12px; min-width: 120px;">Try Again</button>
+                </div>
+
+                <!-- Results Wrapper -->
+                <div class="results-wrapper hidden" id="results-container">
+                    <!-- Destination Card Header -->
+                    <div class="card destination-header-card">
+                        <div class="destination-img-container">
+                            <img id="destination-image" src="travel_hero.jpg" alt="Destination Banner">
+                            <div class="destination-img-overlay"></div>
+                        </div>
+                        <div class="destination-header-content">
+                            <div class="destination-badge" id="dest-type">Historical Getaway</div>
+                            <h2 id="dest-name">Rome, Italy</h2>
+                            <p id="dest-description" class="lead-text">Discover ancient history, scenic landmarks, and delightful culinary wonders in the heart of Europe.</p>
+                            <div class="destination-quick-stats">
+                                <div class="quick-stat">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                    <span id="stat-duration">5 Days</span>
+                                </div>
+                                <div class="quick-stat">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    <span id="stat-travelers">2 Travelers</span>
+                                </div>
+                                <div class="quick-stat">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                    <span id="stat-budget">Luxury ($$$)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Tabs -->
+                    <div class="tabs-nav">
+                        <button class="tab-link active" data-tab="tab-itinerary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Itinerary
+                        </button>
+                        <button class="tab-link" data-tab="tab-budget">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            Budget Breakdown
+                        </button>
+                        <button class="tab-link" data-tab="tab-packing">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                            Packing List
+                        </button>
+                    </div>
+
+                    <!-- Tab Panel: Itinerary -->
+                    <div class="tab-panel active" id="tab-itinerary">
+                        <div class="itinerary-timeline" id="itinerary-content">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Tab Panel: Budget Breakdowns -->
+                    <div class="tab-panel" id="tab-budget">
+                        <div class="card budget-card">
+                            <div class="budget-summary-header">
+                                <div class="budget-total-box">
+                                    <span class="label">Total Estimate</span>
+                                    <h3 class="total-amount" id="budget-total">$0,000</h3>
+                                    <span class="per-person" id="budget-per-person">For 2 travelers ($0,000 / person)</span>
+                                </div>
+                            </div>
+                            
+                            <div class="budget-details">
+                                <h4 class="section-title">Expense Allocation</h4>
+                                <div class="expense-items" id="budget-breakdown-bars">
+                                    <!-- Dynamic elements injected here -->
+                                </div>
+                            </div>
+
+                            <div class="budget-tips">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tip-icon"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <div>
+                                    <h5>AI Savings Advisory</h5>
+                                    <p id="budget-tip-text">Booking local transit cards ahead can shave up to 15% off transport costs.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Panel: Packing List -->
+                    <div class="tab-panel" id="tab-packing">
+                        <div class="card packing-card">
+                            <div class="packing-header">
+                                <div>
+                                    <h3>Packing Checklist</h3>
+                                    <p>Track essentials & personalized additions for your trip type</p>
+                                </div>
+                                <div class="packing-progress-container">
+                                    <div class="progress-info">
+                                        <span class="progress-percentage" id="packing-percentage">0%</span>
+                                        <span class="progress-fraction" id="packing-fraction">0 / 0 Packed</span>
+                                    </div>
+                                    <div class="progress-bar-bg">
+                                        <div class="progress-bar-fill" id="packing-progress-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="packing-lists-container" id="packing-list-content">
+                                <!-- Group categories dynamically -->
+                            </div>
+
+                            <div class="add-custom-item-container">
+                                <h4>Add Custom Item</h4>
+                                <form id="add-item-form" class="custom-item-form" onsubmit="event.preventDefault();">
+                                    <input type="text" id="custom-item-input" placeholder="e.g. Swim goggles, Camera charger..." required>
+                                    <select id="custom-item-category">
+                                        <option value="Essentials">Essentials</option>
+                                        <option value="Clothing">Clothing & Gear</option>
+                                        <option value="Electronics">Electronics</option>
+                                        <option value="Documents">Documents</option>
+                                    </select>
+                                    <button type="submit" id="btn-add-item" class="btn btn-secondary">Add</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2026 VoyageAI. Crafted for travelers everywhere.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
