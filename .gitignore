@@ -1,0 +1,23 @@
+# System and Local Cache files
+.agents/
+.gemini/
+.system_generated/
+*.log
+
+# IDE Configs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS metadata
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Untracked API configurations
+config.json
+.env
+*.env

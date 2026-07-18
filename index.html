@@ -64,16 +64,6 @@
                     </div>
 
                     <form id="itinerary-form" onsubmit="event.preventDefault();">
-                        <!-- Gemini API Key Section -->
-                        <div class="form-group">
-                            <label class="form-label" for="api-key-input">Gemini API Key</label>
-                            <input type="password" id="api-key-input" placeholder="AIzaSy... (Paste key here)"
-                                class="form-input">
-                            <p class="counter-subtext" style="margin-top: 6px;">Keys are stored locally. Get one free
-                                from <a href="https://aistudio.google.com/" target="_blank"
-                                    style="color: var(--color-primary); text-decoration: underline;">Google AI
-                                    Studio</a>. Leave blank for Demo Mode.</p>
-                        </div>
 
                         <!-- Preferences / Vibe Section -->
                         <div class="form-group">
@@ -150,58 +140,36 @@
 
                         <!-- Budget Section -->
                         <div class="form-group">
-                            <label class="form-label">Budget Level</label>
-                            <div class="budget-selector">
-                                <button type="button" class="budget-btn" data-budget="low">
-                                    <span class="budget-symbol">$</span>
-                                    <div class="budget-meta">
-                                        <span class="budget-title">Budget</span>
-                                        <span class="budget-desc">Backpacker, hostels</span>
-                                    </div>
-                                </button>
-                                <button type="button" class="budget-btn active" data-budget="medium">
-                                    <span class="budget-symbol">$$</span>
-                                    <div class="budget-meta">
-                                        <span class="budget-title">Standard</span>
-                                        <span class="budget-desc">Comfortable hotels</span>
-                                    </div>
-                                </button>
-                                <button type="button" class="budget-btn" data-budget="high">
-                                    <span class="budget-symbol">$$$</span>
-                                    <div class="budget-meta">
-                                        <span class="budget-title">Luxury</span>
-                                        <span class="budget-desc">High-end resorts</span>
-                                    </div>
-                                </button>
+                            <div class="label-with-value">
+                                <label class="form-label" for="budget-slider">Budget Limit</label>
+                                <span id="budget-val" class="badge-value">₹25,000</span>
+                            </div>
+                            <div class="range-container">
+                                <input type="range" id="budget-slider" class="range-slider" min="5000" max="100000"
+                                    step="5000" value="25000">
+                                <div class="range-labels">
+                                    <span>₹5,000</span>
+                                    <span>₹50,000</span>
+                                    <span>₹1,00,000</span>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Travelers Counter -->
+                        <!-- Travelers Section -->
                         <div class="form-group">
-                            <div class="counter-container">
-                                <div class="counter-label-group">
-                                    <label class="form-label" style="margin-bottom: 0;">Travelers</label>
-                                    <p class="counter-subtext">Number of people traveling</p>
-                                </div>
-                                <div class="counter-control">
-                                    <button type="button" class="counter-btn" id="btn-decrement">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <line x1="5" y1="12" x2="19" y2="12" />
-                                        </svg>
-                                    </button>
-                                    <span id="travelers-count" class="counter-value">2</span>
-                                    <button type="button" class="counter-btn" id="btn-increment">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <line x1="12" y1="5" x2="12" y2="19" />
-                                            <line x1="5" y1="12" x2="19" y2="12" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
+                            <label class="form-label" for="travelers-select">Number of Travelers</label>
+                            <select id="travelers-select" class="form-input">
+                                <option value="1">1 Traveler</option>
+                                <option value="2" selected>2 Travelers</option>
+                                <option value="3">3 Travelers</option>
+                                <option value="4">4 Travelers</option>
+                                <option value="5">5 Travelers</option>
+                                <option value="6">6 Travelers</option>
+                                <option value="7">7 Travelers</option>
+                                <option value="8">8 Travelers</option>
+                                <option value="9">9 Travelers</option>
+                                <option value="10">10 Travelers</option>
+                            </select>
                         </div>
 
                         <!-- Submit Button -->
@@ -265,6 +233,30 @@
                             <!-- Injected dynamically -->
                         </div>
                     </form>
+                </div>
+
+                <!-- Reviews & Feedback Section -->
+                <div class="card reviews-card" id="reviews-section">
+                    <div class="card-header">
+                        <h2>User Feedback</h2>
+                        <p>Tell us about your experience</p>
+                    </div>
+
+                    <!-- Rating Summary -->
+                    <div class="reviews-summary">
+                        <div class="avg-rating-box">
+                            <span class="avg-rating-val" id="avg-rating">0.0</span>
+                            <div class="avg-rating-stars" id="avg-stars">
+                                <!-- Rendered dynamically -->
+                            </div>
+                            <span class="total-reviews-label" id="total-reviews">0 reviews</span>
+                        </div>
+                    </div>
+
+                    <!-- User Review Form / Submitted Review Display -->
+                    <div id="review-container">
+                        <!-- Injected dynamically -->
+                    </div>
                 </div>
             </section>
 
@@ -362,6 +354,9 @@
                                     <span id="stat-budget">Luxury ($$$)</span>
                                 </div>
                             </div>
+                            <div class="destination-meta-details" id="destination-meta-details">
+                                <!-- Best time to visit and transport tips go here -->
+                            </div>
                             <div class="itinerary-actions">
                                 <button type="button" class="btn btn-secondary btn-action" id="btn-save-itinerary">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -371,7 +366,7 @@
                                         <polyline points="17 21 17 13 7 13 7 21" />
                                         <polyline points="7 3 7 8 15 8" />
                                     </svg>
-                                    <span>Save Itinerary</span>
+                                    <span>Save Trip</span>
                                 </button>
                                 <button type="button" class="btn btn-secondary btn-action" id="btn-download-pdf">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -383,6 +378,52 @@
                                     </svg>
                                     <span>Download PDF</span>
                                 </button>
+                                <button type="button" class="btn btn-secondary btn-action" id="btn-print-itinerary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <polyline points="6 9 6 2 18 2 18 9" />
+                                        <path
+                                            d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                        <rect x="6" y="14" width="12" height="8" />
+                                    </svg>
+                                    <span>Print</span>
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-action" id="btn-copy-itinerary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                    </svg>
+                                    <span>Copy Itinerary</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trip Summary Card -->
+                    <div class="card trip-summary-card" id="trip-summary-card">
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <span class="summary-label">Destination</span>
+                                <span class="summary-value" id="summary-dest">Rome, Italy</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Duration</span>
+                                <span class="summary-value" id="summary-duration">5 Days</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Travelers</span>
+                                <span class="summary-value" id="summary-travelers">2 People</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Set Budget Limit</span>
+                                <span class="summary-value" id="summary-budget">₹25,000</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Est. Cost (Per Person)</span>
+                                <span class="summary-value" id="summary-cost">$0</span>
                             </div>
                         </div>
                     </div>
@@ -415,10 +456,47 @@
                             </svg>
                             Packing List
                         </button>
+                        <button class="tab-link" data-tab="tab-weather">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path
+                                    d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                            </svg>
+                            Weather Forecast
+                        </button>
                     </div>
 
                     <!-- Tab Panel: Itinerary -->
                     <div class="tab-panel active" id="tab-itinerary">
+                        <!-- Simulated Interactive Map Preview -->
+                        <div class="card map-preview-card" id="map-preview-card">
+                            <div class="map-header">
+                                <div class="map-title-group">
+                                    <h4>📍 Route & Map Explorer</h4>
+                                    <span class="map-coordinates" id="map-coords">37.7749° N, 122.4194° W</span>
+                                </div>
+                                <span class="map-badge">Live Map Route</span>
+                            </div>
+                            <div class="map-canvas-sim">
+                                <div class="map-grid-lines"></div>
+                                <div class="map-route-line"></div>
+                                <div class="map-pin pin-1" data-label="Morning Sightseeing">
+                                    <div class="pin-dot"></div>
+                                </div>
+                                <div class="map-pin pin-2" data-label="Lunch & Cafe">
+                                    <div class="pin-dot"></div>
+                                </div>
+                                <div class="map-pin pin-3" data-label="Historical Walk">
+                                    <div class="pin-dot"></div>
+                                </div>
+                                <div class="map-overlay-card">
+                                    <h5 id="map-overlay-title">Rome City Route</h5>
+                                    <p>Estimated route distance: <strong id="map-route-dist">12.5 km</strong></p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="itinerary-timeline" id="itinerary-content">
                             <!-- Injected dynamically -->
                         </div>
@@ -457,6 +535,17 @@
                                     <p id="budget-tip-text">Booking local transit cards ahead can shave up to 15% off
                                         transport costs.</p>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Hotel Recommendations Card -->
+                        <div class="card hotels-card" style="margin-top: 24px;">
+                            <div class="card-header">
+                                <h2>🏨 Recommended Stays</h2>
+                                <p>Top accommodation options matching your budget limit</p>
+                            </div>
+                            <div class="hotels-grid" id="hotels-list">
+                                <!-- Injected dynamically -->
                             </div>
                         </div>
                     </div>
@@ -500,13 +589,32 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Tab Panel: Weather Forecast -->
+                    <div class="tab-panel" id="tab-weather">
+                        <div class="card weather-card-panel">
+                            <h3 class="section-title">5-Day Weather Forecast</h3>
+                            <div class="weather-grid" id="weather-forecast-content">
+                                <!-- Dynamic weather items injected here -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
 
         <footer class="app-footer">
-            <p>&copy; 2026 VoyageAI. Crafted for travelers everywhere.</p>
+            <p>Developed by Aditi Singh &copy; 2026 | VoyageAI Version 1.0</p>
         </footer>
+    </div>
+
+    <!-- Success Notification Toast -->
+    <div id="success-notification" class="notification-toast hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+        </svg>
+        <span>Itinerary Loaded successfully!</span>
     </div>
 
     <script src="script.js"></script>

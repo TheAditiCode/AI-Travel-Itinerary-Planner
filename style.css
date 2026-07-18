@@ -7,28 +7,31 @@
     --bg-surface-hover: #1d273f;
     --border-color: rgba(255, 255, 255, 0.06);
     --border-hover: rgba(99, 102, 241, 0.25);
-    
-    --color-primary: #6366f1; /* Indigo */
+
+    --color-primary: #6366f1;
+    /* Indigo */
     --color-primary-hover: #4f46e5;
     --color-primary-glow: rgba(99, 102, 241, 0.15);
-    
-    --color-accent: #10b981; /* Emerald */
+
+    --color-accent: #10b981;
+    /* Emerald */
     --color-accent-hover: #059669;
     --color-accent-glow: rgba(16, 185, 129, 0.1);
-    
-    --color-warning: #f59e0b; /* Amber */
-    
+
+    --color-warning: #f59e0b;
+    /* Amber */
+
     --text-primary: #f3f4f6;
     --text-secondary: #9ca3af;
     --text-muted: #6b7280;
-    
+
     --font-sans: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    
+
     --radius-xl: 20px;
     --radius-lg: 16px;
     --radius-md: 12px;
     --radius-sm: 8px;
-    
+
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
     --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.2);
@@ -44,6 +47,11 @@
 
 body {
     background-color: var(--bg-base);
+    background-image:
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='0.75' fill='rgba(255,255,255,0.025)'/%3E%3C/svg%3E");
+    background-attachment: fixed;
     color: var(--text-primary);
     font-family: var(--font-sans);
     line-height: 1.6;
@@ -58,18 +66,18 @@ body {
     top: -150px;
     left: 50%;
     transform: translateX(-50%);
-    width: 80vw;
-    height: 600px;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(7, 10, 19, 0) 70%);
+    width: 90vw;
+    height: 700px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, rgba(7, 10, 19, 0) 70%);
     z-index: -1;
     pointer-events: none;
 }
 
 /* Container */
 .app-container {
-    max-width: 1300px;
+    max-width: 1600px;
     margin: 0 auto;
-    padding: 24px 16px;
+    padding: 32px 24px;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -144,43 +152,55 @@ body {
 .main-layout {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: 48px;
     flex-grow: 1;
 }
 
 @media (min-width: 1024px) {
     .main-layout {
-        grid-template-columns: 420px 1fr;
+        grid-template-columns: 550px 1fr;
     }
 }
 
 /* Cards */
 .card {
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-color);
+    background: rgba(15, 21, 36, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-xl);
-    padding: 28px;
+    padding: 32px;
     box-shadow: var(--shadow-md);
     transition: var(--transition);
 }
 
 .card:hover {
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 .card-header {
-    margin-bottom: 24px;
+    margin-bottom: 28px;
 }
 
 .card-header h2 {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 4px;
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 6px;
+}
+
+.form-card .card-header h2 {
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
 }
 
 .card-header p {
     color: var(--text-secondary);
-    font-size: 14px;
+    font-size: 15px;
 }
 
 /* Forms */
@@ -1134,7 +1154,7 @@ body {
     margin-bottom: 12px;
     color: #a5b4fc;
     font-weight: 700;
-    border-bottom: 1px solid rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     padding-bottom: 8px;
 }
 
@@ -1189,11 +1209,11 @@ body {
     transition: var(--transition);
 }
 
-.custom-checkbox-wrapper:hover input ~ .checkmark {
+.custom-checkbox-wrapper:hover input~.checkmark {
     border-color: var(--color-accent);
 }
 
-.custom-checkbox-wrapper input:checked ~ .checkmark {
+.custom-checkbox-wrapper input:checked~.checkmark {
     background-color: var(--color-accent);
     border-color: var(--color-accent);
 }
@@ -1204,7 +1224,7 @@ body {
     display: none;
 }
 
-.custom-checkbox-wrapper input:checked ~ .checkmark:after {
+.custom-checkbox-wrapper input:checked~.checkmark:after {
     display: block;
 }
 
@@ -1331,23 +1351,45 @@ body {
 
 /* Animations */
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes float {
-    0% { transform: translate(-50%, -50%) rotate(45deg) translateY(0px); }
-    100% { transform: translate(-50%, -50%) rotate(45deg) translateY(-8px); }
+    0% {
+        transform: translate(-50%, -50%) rotate(45deg) translateY(0px);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(45deg) translateY(-8px);
+    }
 }
 
 @keyframes pulse {
-    0% { box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4); }
-    100% { box-shadow: 0 4px 20px rgba(99, 102, 241, 0.7); }
+    0% {
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+
+    100% {
+        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.7);
+    }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .hidden {
@@ -1425,19 +1467,19 @@ body.light-theme {
     --bg-surface-hover: #e2e8f0;
     --border-color: rgba(15, 23, 42, 0.08);
     --border-hover: rgba(99, 102, 241, 0.4);
-    
+
     --text-primary: #0f172a;
     --text-secondary: #475569;
     --text-muted: #64748b;
-    
+
     --color-primary: #4f46e5;
     --color-primary-hover: #3730a3;
     --color-primary-glow: rgba(99, 102, 241, 0.08);
-    
+
     --color-accent: #059669;
     --color-accent-hover: #047857;
     --color-accent-glow: rgba(5, 150, 105, 0.08);
-    
+
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.04);
@@ -1447,7 +1489,7 @@ body.light-theme .bg-glow {
     background: radial-gradient(circle, rgba(99, 102, 241, 0.03) 0%, rgba(248, 250, 252, 0) 70%);
 }
 
-body.light-theme input, 
+body.light-theme input,
 body.light-theme select {
     background-color: #ffffff !important;
     color: #0f172a !important;
@@ -1779,7 +1821,8 @@ body.pdf-printing .tabs-nav {
 }
 
 body.pdf-printing .tab-panel {
-    display: block !important; /* Force render active panel layout */
+    display: block !important;
+    /* Force render active panel layout */
 }
 
 body.pdf-printing .day-header {
@@ -1793,11 +1836,13 @@ body.pdf-printing .day-title {
 }
 
 body.pdf-printing .day-arrow {
-    display: none !important; /* Hide accordion arrow */
+    display: none !important;
+    /* Hide accordion arrow */
 }
 
 body.pdf-printing .day-content {
-    max-height: none !important; /* Keep accordion fully expanded */
+    max-height: none !important;
+    /* Keep accordion fully expanded */
     display: block !important;
     border-color: #e2e8f0 !important;
     background-color: #ffffff !important;
@@ -1826,7 +1871,9 @@ body.pdf-printing .day-img-container {
 }
 
 @keyframes spinner-rotate {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .btn.loading {
@@ -1859,7 +1906,9 @@ body.pdf-printing .day-img-container {
 }
 
 @keyframes ring-dash-spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Currency Converter Card Styles */
@@ -1927,4 +1976,707 @@ body.pdf-printing .day-img-container {
 /* Light Theme Currency Result Overrides */
 body.light-theme .converter-result-box {
     background-color: #f8fafc;
+}
+
+/* Version 1.0 Release UI Styles */
+
+/* Destination Meta details in header */
+.destination-meta-details {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+}
+
+.meta-detail-item strong {
+    color: var(--color-primary);
+}
+
+.meta-detail-item span {
+    color: var(--text-primary);
+    margin-left: 4px;
+}
+
+/* Trip Summary Card */
+.trip-summary-card {
+    margin-top: 24px;
+    padding: 20px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 16px;
+}
+
+/* Add support for grid flex layouts across responsive frames */
+@media (min-width: 640px) {
+    .summary-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 8px;
+    border-right: 1px solid var(--border-color);
+}
+
+.summary-item:last-child {
+    border-right: none;
+}
+
+.summary-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.summary-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-accent);
+}
+
+/* Weather tab styles */
+.weather-card-panel {
+    padding: 24px;
+}
+
+.weather-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.weather-item-card {
+    background-color: var(--bg-surface-hover);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.weather-item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.weather-date {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.weather-icon-large {
+    font-size: 32px;
+    margin: 12px 0;
+}
+
+.weather-temp-range {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.weather-temp-range .max-temp {
+    color: var(--color-accent);
+}
+
+.weather-temp-range .min-temp {
+    color: var(--text-muted);
+}
+
+.weather-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.weather-loading,
+.weather-error {
+    text-align: center;
+    padding: 40px;
+    width: 100%;
+    color: var(--text-secondary);
+}
+
+.weather-err-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--text-muted);
+    margin: 0 auto 12px;
+    opacity: 0.5;
+}
+
+/* Success notification toast styling */
+.notification-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background-color: #10b981;
+    color: #ffffff;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    z-index: 9999;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideInUp 0.3s ease-out;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.notification-toast.hidden {
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Media printing tweaks */
+@media print {
+    body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    .app-header,
+    .planner-form-section,
+    .itinerary-actions,
+    .tabs-nav,
+    .app-footer,
+    #success-notification,
+    .bg-glow {
+        display: none !important;
+    }
+
+    .app-container,
+    .main-layout,
+    .planner-results-section {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    .card {
+        background-color: #ffffff !important;
+        border-color: #e2e8f0 !important;
+        box-shadow: none !important;
+        margin-bottom: 20px !important;
+    }
+
+    .tab-panel {
+        display: block !important;
+        /* Force render panels in prints */
+    }
+
+    .day-accordion-content {
+        max-height: none !important;
+        display: block !important;
+    }
+}
+
+/* Currency converter fallback warning badge */
+.fallback-note {
+    font-size: 11px;
+    color: #f59e0b;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* User Rating & Feedback Card Styles */
+.reviews-card {
+    margin-top: 24px;
+}
+
+.reviews-summary {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.avg-rating-box {
+    text-align: center;
+}
+
+.avg-rating-val {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--color-accent);
+    line-height: 1;
+}
+
+.avg-rating-stars {
+    color: #f59e0b;
+    font-size: 18px;
+    margin: 6px 0;
+}
+
+.total-reviews-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.star-rating-input {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.star-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 30px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.star-btn:hover {
+    transform: scale(1.15);
+}
+
+.star-btn.active,
+.star-btn.hovered {
+    color: #f59e0b;
+}
+
+.text-area {
+    resize: none;
+}
+
+.user-review-display {
+    background-color: var(--bg-surface-hover);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.user-review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.user-review-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.user-review-stars {
+    color: #f59e0b;
+    font-size: 14px;
+}
+
+.user-review-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 12px;
+    white-space: pre-wrap;
+}
+
+.user-review-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-review-action {
+    background: none;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.15s ease;
+}
+
+.btn-review-action:hover {
+    opacity: 0.8;
+}
+
+.btn-review-action.edit {
+    color: var(--color-primary);
+}
+
+.btn-review-action.delete {
+    color: #ef4444;
+}
+
+/* Light Theme Overrides */
+body.light-theme .user-review-display {
+    background-color: #f8fafc;
+}
+
+/* Up-scaled input fields & typography styles */
+.form-input {
+    width: 100%;
+    background-color: var(--bg-surface-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    font-size: 16px;
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+    transition: var(--transition);
+    outline: none;
+}
+
+.form-input:focus {
+    border-color: var(--color-primary);
+    background-color: var(--bg-surface-hover);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+}
+
+.form-label {
+    font-size: 16px !important;
+    margin-bottom: 14px !important;
+    letter-spacing: 0.8px !important;
+}
+
+.badge-value {
+    font-size: 14px !important;
+    padding: 4px 12px !important;
+}
+
+.vibe-card {
+    padding: 20px !important;
+}
+
+.vibe-card span {
+    font-size: 16px !important;
+}
+
+.range-slider {
+    height: 8px !important;
+}
+
+.range-slider::-webkit-slider-thumb {
+    width: 24px !important;
+    height: 24px !important;
+}
+
+.range-labels {
+    font-size: 14px !important;
+}
+
+.btn {
+    padding: 16px 32px !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+}
+
+/* Light Theme Input override */
+body.light-theme .form-input {
+    background-color: #ffffff;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+body.light-theme .form-input:focus {
+    background-color: #ffffff;
+    border-color: var(--color-primary);
+}
+
+/* Simulated Route & Map Explorer Widget styling */
+.map-preview-card {
+    margin-bottom: 24px;
+    overflow: hidden;
+    padding: 0 !important;
+}
+
+.map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.map-title-group h4 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.map-coordinates {
+    font-size: 11px;
+    color: var(--color-primary);
+    font-family: monospace;
+    margin-top: 2px;
+    display: block;
+}
+
+.map-badge {
+    font-size: 11px;
+    background: var(--color-primary-glow);
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-weight: 700;
+}
+
+.map-canvas-sim {
+    height: 250px;
+    background-color: #0a0f1d;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Map Grid lines & styling */
+.map-grid-lines {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.map-route-line {
+    position: absolute;
+    top: 50%;
+    left: 15%;
+    width: 70%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+    transform: translateY(-50%) rotate(5deg);
+    box-shadow: 0 0 10px var(--color-primary);
+    z-index: 1;
+}
+
+.map-pin {
+    position: absolute;
+    z-index: 2;
+}
+
+.map-pin::after {
+    content: attr(data-label);
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-surface-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    box-shadow: var(--shadow-sm);
+    pointer-events: none;
+}
+
+.pin-dot {
+    width: 12px;
+    height: 12px;
+    background-color: var(--color-accent);
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--color-accent);
+    animation: pin-pulse 2s infinite;
+}
+
+.pin-1 {
+    top: 40%;
+    left: 15%;
+}
+
+.pin-1 .pin-dot {
+    background-color: var(--color-primary);
+    box-shadow: 0 0 10px var(--color-primary);
+}
+
+.pin-2 {
+    top: 60%;
+    left: 45%;
+}
+
+.pin-2 .pin-dot {
+    background-color: var(--color-warning);
+    box-shadow: 0 0 10px var(--color-warning);
+}
+
+.pin-3 {
+    top: 35%;
+    left: 80%;
+}
+
+@keyframes pin-pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.map-overlay-card {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    background: rgba(15, 21, 36, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    z-index: 3;
+    max-width: 200px;
+    box-shadow: var(--shadow-md);
+}
+
+.map-overlay-card h5 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.map-overlay-card p {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Hotel Recommendations card styling */
+.hotels-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.hotel-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-surface-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    transition: var(--transition);
+}
+
+.hotel-item-row:hover {
+    border-color: var(--border-hover);
+    background-color: var(--bg-surface-hover);
+    transform: translateX(4px);
+}
+
+.hotel-info-block h5 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.hotel-tag {
+    display: inline-block;
+    background-color: var(--color-primary-glow);
+    color: #a5b4fc;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.hotel-price-block {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.hotel-rating {
+    font-size: 12px;
+    font-weight: 700;
+    color: #f59e0b;
+}
+
+.hotel-cost {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--color-accent);
+}
+
+.hotel-cost small {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Light theme overrides for map explorer & stays */
+body.light-theme .map-canvas-sim {
+    background-color: #f1f5f9;
+}
+
+body.light-theme .map-grid-lines {
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+}
+
+body.light-theme .map-overlay-card {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+body.light-theme .map-pin::after {
+    background: #ffffff;
+    color: #334155;
+}
+
+body.light-theme .hotel-item-row {
+    background-color: #f8fafc;
+}
+
+body.light-theme .hotel-item-row:hover {
+    background-color: #f1f5f9;
 }

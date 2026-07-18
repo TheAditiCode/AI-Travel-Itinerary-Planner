@@ -7,7 +7,7 @@
 const state = {
     vibe: 'beach',
     duration: 5,
-    budget: 'medium',
+    budgetLimit: 25000,
     travelers: 2,
     packingList: [],
     customItems: [],
@@ -688,16 +688,14 @@ const vibePackingList = {
 
 // --- DOM Cache Elements ---
 const elements = {
-    apiKeyInput: document.getElementById('api-key-input'),
     vibeCards: document.querySelectorAll('.vibe-card'),
     durationSlider: document.getElementById('duration-slider'),
     durationVal: document.getElementById('duration-val'),
-    budgetBtns: document.querySelectorAll('.budget-btn'),
-    btnDecrement: document.getElementById('btn-decrement'),
-    btnIncrement: document.getElementById('btn-increment'),
-    travelersCount: document.getElementById('travelers-count'),
+    budgetSlider: document.getElementById('budget-slider'),
+    budgetVal: document.getElementById('budget-val'),
+    travelersSelect: document.getElementById('travelers-select'),
     btnGenerate: document.getElementById('btn-generate'),
-    
+
     emptyState: document.getElementById('empty-state'),
     loadingState: document.getElementById('loading-state'),
     loadingTitle: document.getElementById('loading-title'),
@@ -706,7 +704,7 @@ const elements = {
     errorMessage: document.getElementById('error-message'),
     btnErrorRetry: document.getElementById('btn-error-retry'),
     resultsContainer: document.getElementById('results-container'),
-    
+
     destImage: document.getElementById('destination-image'),
     destName: document.getElementById('dest-name'),
     destType: document.getElementById('dest-type'),
@@ -714,31 +712,33 @@ const elements = {
     statDuration: document.getElementById('stat-duration'),
     statTravelers: document.getElementById('stat-travelers'),
     statBudget: document.getElementById('stat-budget'),
-    
+
     tabLinks: document.querySelectorAll('.tab-link'),
     tabPanels: document.querySelectorAll('.tab-panel'),
-    
+
     itineraryContent: document.getElementById('itinerary-content'),
     budgetTotal: document.getElementById('budget-total'),
     budgetPerPerson: document.getElementById('budget-per-person'),
     budgetBreakdownBars: document.getElementById('budget-breakdown-bars'),
     budgetTipText: document.getElementById('budget-tip-text'),
-    
+
     packingListContent: document.getElementById('packing-list-content'),
     packingPercentage: document.getElementById('packing-percentage'),
     packingFraction: document.getElementById('packing-fraction'),
     packingProgressBar: document.getElementById('packing-progress-bar'),
-    
+
     addItemForm: document.getElementById('add-item-form'),
     customItemInput: document.getElementById('custom-item-input'),
     customItemCategory: document.getElementById('custom-item-category'),
     btnAddItem: document.getElementById('btn-add-item'),
-    
+
     themeToggleBtn: document.getElementById('theme-toggle'),
     savedTripsList: document.getElementById('saved-trips-list'),
     btnSaveItinerary: document.getElementById('btn-save-itinerary'),
     btnDownloadPdf: document.getElementById('btn-download-pdf'),
-    
+    btnPrintItinerary: document.getElementById('btn-print-itinerary'),
+    btnCopyItinerary: document.getElementById('btn-copy-itinerary'),
+
     converterAmount: document.getElementById('converter-amount'),
     converterFrom: document.getElementById('converter-from'),
     converterTo: document.getElementById('converter-to'),
@@ -764,28 +764,16 @@ function init() {
         elements.durationVal.textContent = val === 1 ? '1 Day' : `${val} Days`;
     });
 
-    // 3. Budget Selector
-    elements.budgetBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            elements.budgetBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            state.budget = btn.dataset.budget;
-        });
+    // 3. Budget Limit Slider
+    elements.budgetSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        state.budgetLimit = val;
+        elements.budgetVal.textContent = `₹${val.toLocaleString('en-IN')}`;
     });
 
-    // 4. Travelers Counter
-    elements.btnDecrement.addEventListener('click', () => {
-        if (state.travelers > 1) {
-            state.travelers--;
-            elements.travelersCount.textContent = state.travelers;
-        }
-    });
-
-    elements.btnIncrement.addEventListener('click', () => {
-        if (state.travelers < 10) {
-            state.travelers++;
-            elements.travelersCount.textContent = state.travelers;
-        }
+    // 4. Travelers Select Dropdown
+    elements.travelersSelect.addEventListener('change', (e) => {
+        state.travelers = parseInt(e.target.value);
     });
 
     // 5. Tabs Management
@@ -793,11 +781,11 @@ function init() {
         tab.addEventListener('click', () => {
             elements.tabLinks.forEach(t => t.classList.remove('active'));
             elements.tabPanels.forEach(p => p.classList.remove('active'));
-            
+
             tab.classList.add('active');
             const targetId = tab.dataset.tab;
             document.getElementById(targetId).classList.add('active');
-            
+
             // Trigger animation repaint for budget bars if switching to budget tab
             if (targetId === 'tab-budget') {
                 animateBudgetBars();
@@ -814,13 +802,7 @@ function init() {
         addCustomPackingItem();
     });
 
-    // 8. Gemini API Key and Error Handling Event Listeners
-    if (localStorage.getItem('gemini_api_key')) {
-        elements.apiKeyInput.value = localStorage.getItem('gemini_api_key');
-    }
-    elements.apiKeyInput.addEventListener('input', (e) => {
-        localStorage.setItem('gemini_api_key', e.target.value.trim());
-    });
+    // 8. Error Handling Event Listeners
     elements.btnErrorRetry.addEventListener('click', generateItinerary);
 
     // 9. Light/Dark Theme Toggle
@@ -843,6 +825,12 @@ function init() {
     if (elements.btnDownloadPdf) {
         elements.btnDownloadPdf.addEventListener('click', downloadPDF);
     }
+    if (elements.btnPrintItinerary) {
+        elements.btnPrintItinerary.addEventListener('click', () => window.print());
+    }
+    if (elements.btnCopyItinerary) {
+        elements.btnCopyItinerary.addEventListener('click', copyItineraryToClipboard);
+    }
 
     // 11. Initial Saved Trips Load
     renderSavedTrips();
@@ -851,12 +839,13 @@ function init() {
     if (elements.btnConvert) {
         elements.btnConvert.addEventListener('click', convertCurrency);
     }
+
+    // 13. Initialize User Ratings & Feedback feature
+    initUserFeedback();
 }
 
 // --- Loading Simulation & Generator Logic ---
 function generateItinerary() {
-    const apiKey = elements.apiKeyInput.value.trim();
-    
     // Scroll results area into view on mobile
     if (window.innerWidth < 1024) {
         elements.loadingState.scrollIntoView({ behavior: 'smooth' });
@@ -867,7 +856,7 @@ function generateItinerary() {
     elements.resultsContainer.classList.add('hidden');
     elements.errorState.classList.add('hidden');
     elements.loadingState.classList.remove('hidden');
-    
+
     const loadingSteps = [
         { title: "Consulting Gemini AI...", sub: "Connecting to the next-gen itinerary planning engine." },
         { title: "Analyzing destination database...", sub: "Evaluating climate trends, local transport options, and tourist volume." },
@@ -886,36 +875,11 @@ function generateItinerary() {
         stepIndex = (stepIndex + 1) % loadingSteps.length;
     }, 1500);
 
-    if (!apiKey) {
-        // Fallback to Demo Mode (offline lookup)
-        console.log("No API Key found. Running in Offline Demo Mode.");
-        elements.btnGenerate.disabled = true;
-        elements.btnGenerate.classList.add('loading');
-        const btnText = elements.btnGenerate.querySelector('.btn-text');
-        if (btnText) btnText.innerHTML = `<span class="loader-spinner"></span> Generating...`;
-
-        setTimeout(() => {
-            clearInterval(loadingInterval);
-            
-            elements.btnGenerate.disabled = false;
-            elements.btnGenerate.classList.remove('loading');
-            if (btnText) btnText.textContent = "Generate AI Itinerary";
-            
-            const category = state.vibe;
-            const budgetLevel = state.budget;
-            let budgetKey = 'medium';
-            if (budgetLevel === 'low') budgetKey = 'low';
-            if (budgetLevel === 'high') budgetKey = 'high';
-            
-            const destination = destinationsDb[category][budgetKey];
-            finishGeneration(destination, false);
-        }, 3000);
-        return;
-    }
-
     // Call Gemini API
     const category = state.vibe;
-    const budgetLevel = state.budget;
+    let budgetLevel = 'medium';
+    if (state.budgetLimit < 20000) budgetLevel = 'low';
+    else if (state.budgetLimit > 60000) budgetLevel = 'high';
     const travelers = state.travelers;
     const duration = state.duration;
 
@@ -937,6 +901,10 @@ Provide realistic daily rates (average cost per person per day in USD) for:
 - transit
 - food
 - fun
+
+Provide:
+- bestTime: a short string describing the best time of year to visit this destination.
+- transport: a short string describing the best local transportation modes for travelers.
 
 Provide a matching short, actionable savings/advice tip.
 Provide a tailored packing list containing 5 custom items specific to this destination and season/weather.
@@ -966,6 +934,8 @@ For each day in the itinerary, provide:
                     name: { type: "STRING" },
                     badge: { type: "STRING" },
                     description: { type: "STRING" },
+                    bestTime: { type: "STRING" },
+                    transport: { type: "STRING" },
                     dailyRates: {
                         type: "OBJECT",
                         properties: {
@@ -1012,74 +982,64 @@ For each day in the itinerary, provide:
                         items: { type: "STRING" }
                     }
                 },
-                required: ["name", "badge", "description", "dailyRates", "tips", "days"]
+                required: ["name", "badge", "description", "bestTime", "transport", "dailyRates", "tips", "days"]
             }
         }
     };
 
-    fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
+    fetch(`/api/generate`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestBody)
     })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errData => {
-                const errMsg = (errData.error && errData.error.message) || `HTTP error ${response.status}`;
-                throw new Error(errMsg);
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        clearInterval(loadingInterval);
-        
-        let jsonText = "";
-        if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
-            jsonText = data.candidates[0].content.parts[0].text;
-        } else {
-            throw new Error("Invalid API response format");
-        }
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errData => {
+                    const errMsg = (errData.error && errData.error.message) || `HTTP error ${response.status}`;
+                    throw new Error(errMsg);
+                }).catch(e => {
+                    throw new Error(`HTTP error ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            clearInterval(loadingInterval);
 
-        const destinationData = JSON.parse(jsonText);
-        if (!destinationData.days || !Array.isArray(destinationData.days)) {
-            throw new Error("No itinerary days returned by AI");
-        }
+            let jsonText = "";
+            if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
+                jsonText = data.candidates[0].content.parts[0].text;
+            } else {
+                throw new Error("Invalid API response format");
+            }
 
-        finishGeneration(destinationData, true);
-    })
-    .catch(err => {
-        clearInterval(loadingInterval);
-        console.error("Gemini Generation Error:", err);
-        elements.loadingState.classList.add('hidden');
-        elements.errorState.classList.remove('hidden');
-        
-        // Re-enable generate button
-        elements.btnGenerate.disabled = false;
-        elements.btnGenerate.classList.remove('loading');
-        const btnText = elements.btnGenerate.querySelector('.btn-text');
-        if (btnText) btnText.textContent = "Generate AI Itinerary";
-        
-        let userMessage = "An unexpected error occurred. Please verify your API Key and connection.";
-        const errMsg = err.message || "";
-        
-        if (errMsg.toLowerCase().includes("failed to fetch") || errMsg.toLowerCase().includes("networkerror")) {
-            userMessage = "Network Connection Error: Unable to reach Gemini API. Please check your internet connection and verify that Google services are accessible in your region.";
-        } else if (errMsg.toLowerCase().includes("api key") || errMsg.toLowerCase().includes("not valid") || errMsg.toLowerCase().includes("invalid")) {
-            userMessage = "Invalid API Key: The provided Gemini API Key is invalid or expired. Please check your API key from Google AI Studio and enter it again.";
-        } else if (errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("limit")) {
-            userMessage = "API Limit Exceeded: You have reached your Gemini API quota limit. Please wait a minute or try using another key.";
-        } else if (errMsg) {
-            userMessage = `Gemini API Error: ${errMsg}`;
-        }
-        
-        elements.errorMessage.textContent = userMessage;
-        if (window.innerWidth < 1024) {
-            elements.errorState.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
+            const destinationData = JSON.parse(jsonText);
+            if (!destinationData.days || !Array.isArray(destinationData.days)) {
+                throw new Error("No itinerary days returned by AI");
+            }
+
+            finishGeneration(destinationData, true);
+        })
+        .catch(err => {
+            clearInterval(loadingInterval);
+            console.warn("Live Generation failed or key is not set. Falling back to pre-seeded Demo Mode.", err);
+
+            setTimeout(() => {
+                elements.btnGenerate.disabled = false;
+                elements.btnGenerate.classList.remove('loading');
+                if (btnText) btnText.textContent = "Generate AI Itinerary";
+
+                let budgetKey = 'medium';
+                if (state.budgetLimit < 20000) budgetKey = 'low';
+                else if (state.budgetLimit > 60000) budgetKey = 'high';
+
+                const destination = destinationsDb[category][budgetKey];
+                finishGeneration(destination, false);
+                showSuccessNotification("Offline Demo Mode: pre-seeded itinerary loaded!");
+            }, 1500);
+        });
 }
 
 function finishGeneration(destination, isRealAI = false) {
@@ -1096,7 +1056,7 @@ function finishGeneration(destination, isRealAI = false) {
     // Reset Save button active state indicator if any
     const btnSave = document.getElementById('btn-save-itinerary');
     if (btnSave) {
-        btnSave.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> <span>Save Itinerary</span>`;
+        btnSave.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> <span>Save Trip</span>`;
         btnSave.classList.remove('saved-active');
     }
 
@@ -1106,24 +1066,59 @@ function finishGeneration(destination, isRealAI = false) {
     elements.resultsContainer.classList.remove('hidden');
 
     const category = state.vibe;
-    const budgetLevel = state.budget;
-    
+    let budgetLevel = 'medium';
+    if (state.budgetLimit < 20000) budgetLevel = 'low';
+    else if (state.budgetLimit > 60000) budgetLevel = 'high';
+
     // 3. Render Header Cards
     elements.destName.textContent = destination.name;
     elements.destType.innerHTML = isRealAI ? `✨ Gemini AI: ${destination.badge}` : destination.badge;
     elements.destDescription.textContent = destination.description;
-    
+
     const cityName = destination.name.split(',')[0].trim();
     if (elements.destImage) {
         elements.destImage.src = `https://loremflickr.com/1200/600/travel,${encodeURIComponent(cityName)}`;
     }
-    
+
     // Render Quick Stats
     elements.statDuration.textContent = state.duration === 1 ? '1 Day' : `${state.duration} Days`;
     elements.statTravelers.textContent = state.travelers === 1 ? '1 Traveler' : `${state.travelers} Travelers`;
-    
-    const budgetLabels = { low: 'Budget ($)', medium: 'Standard ($$)', high: 'Luxury ($$$)' };
-    elements.statBudget.textContent = budgetLabels[budgetLevel];
+    elements.statBudget.textContent = `Limit: ₹${state.budgetLimit.toLocaleString('en-IN')}`;
+
+    // Render best visiting time & transit
+    const metaDetails = document.getElementById('destination-meta-details');
+    if (metaDetails) {
+        const bestTime = destination.bestTime || "October to March (Excellent travel weather)";
+        const transport = destination.transport || "Public train networks, walking trails, and local taxis.";
+        metaDetails.innerHTML = `
+            <div class="meta-detail-item">
+                <strong>📅 Best Visiting Time:</strong> <span>${bestTime}</span>
+            </div>
+            <div class="meta-detail-item" style="margin-top: 6px;">
+                <strong>🚗 Transit & Travel:</strong> <span>${transport}</span>
+            </div>
+        `;
+    }
+
+    // Render weather forecast
+    fetchAndRenderWeather(cityName);
+
+    // Populate Trip Summary Card values
+    const summaryDest = document.getElementById('summary-dest');
+    const summaryDuration = document.getElementById('summary-duration');
+    const summaryTravelers = document.getElementById('summary-travelers');
+    const summaryBudget = document.getElementById('summary-budget');
+    const summaryCost = document.getElementById('summary-cost');
+
+    const costPerPerson = (destination.dailyRates.stay + destination.dailyRates.transit + destination.dailyRates.food + destination.dailyRates.fun) * state.duration;
+    const usdToInrRate = 83.5;
+    const costPerPersonInr = Math.round(costPerPerson * usdToInrRate);
+
+    if (summaryDest) summaryDest.textContent = destination.name;
+    if (summaryDuration) summaryDuration.textContent = state.duration === 1 ? '1 Day' : `${state.duration} Days`;
+    if (summaryTravelers) summaryTravelers.textContent = state.travelers === 1 ? '1 Traveler' : `${state.travelers} Travelers`;
+    if (summaryBudget) summaryBudget.textContent = `₹${state.budgetLimit.toLocaleString('en-IN')}`;
+    if (summaryCost) summaryCost.textContent = `$${costPerPerson.toLocaleString()} (≈ ₹${costPerPersonInr.toLocaleString('en-IN')})`;
 
     // 4. Render Day Itineraries
     renderItinerary(destination.days, destination.name);
@@ -1134,12 +1129,27 @@ function finishGeneration(destination, isRealAI = false) {
     // 6. Seed & Render Packing List
     seedPackingList(category, destination.packingList);
 
+    // Update map preview title & simulated distance
+    const mapOverlayTitle = document.getElementById('map-overlay-title');
+    const mapRouteDist = document.getElementById('map-route-dist');
+    if (mapOverlayTitle) mapOverlayTitle.textContent = `${cityName} Route`;
+    if (mapRouteDist) {
+        const estimatedDist = (state.duration * 3.8 + 5).toFixed(1);
+        mapRouteDist.textContent = `${estimatedDist} km`;
+    }
+
+    // Render hotel recommendations
+    renderHotels(cityName, state.budgetLimit);
+
     // Reset tabs back to first panel (Itinerary)
     elements.tabLinks.forEach(t => t.classList.remove('active'));
     elements.tabPanels.forEach(p => p.classList.remove('active'));
     elements.tabLinks[0].classList.add('active');
     elements.tabPanels[0].classList.add('active');
-    
+
+    // Show toast success alert
+    showSuccessNotification(isRealAI ? "AI Itinerary generated successfully!" : "Demo offline itinerary loaded successfully!");
+
     if (window.innerWidth < 1024) {
         elements.resultsContainer.scrollIntoView({ behavior: 'smooth' });
     }
@@ -1152,7 +1162,7 @@ function renderItinerary(daysPool, destinationName) {
     elements.itineraryContent.innerHTML = '';
     const numDays = state.duration;
     const cityName = destinationName ? destinationName.split(',')[0].trim() : 'travel';
-    
+
     for (let d = 1; d <= numDays; d++) {
         // Find or build a day
         let dayData;
@@ -1185,10 +1195,10 @@ function renderItinerary(daysPool, destinationName) {
         }
 
         const isExpanded = d === 1; // Auto expand first day
-        
+
         const dayEl = document.createElement('div');
         dayEl.className = `timeline-day ${isExpanded ? 'expanded' : ''}`;
-        
+
         dayEl.innerHTML = `
             <div class="timeline-dot"></div>
             <div class="day-header" onclick="toggleDayAccordion(this.parentNode)">
@@ -1292,24 +1302,69 @@ function renderItinerary(daysPool, destinationName) {
                 </div>
             </div>
         `;
-        
+
         elements.itineraryContent.appendChild(dayEl);
     }
 }
 
 // Handles accordion toggling
-window.toggleDayAccordion = function(dayElement) {
+window.toggleDayAccordion = function (dayElement) {
     const isExpanded = dayElement.classList.contains('expanded');
-    
-    // Close other days if desired (single accordion mode) - optional. Let's keep it friendly:
+
     document.querySelectorAll('.timeline-day').forEach(el => {
         el.classList.remove('expanded');
     });
-    
+
     if (!isExpanded) {
         dayElement.classList.add('expanded');
     }
 };
+
+function renderHotels(cityName, budgetLimit) {
+    const hotelsList = document.getElementById('hotels-list');
+    if (!hotelsList) return;
+
+    let tier = 'medium';
+    if (budgetLimit < 20000) tier = 'low';
+    else if (budgetLimit > 60000) tier = 'high';
+
+    const hotelsData = {
+        low: [
+            { name: `${cityName} Backpackers Hostel`, price: '₹1,200', rating: '★ 4.2', tag: 'Social Vibe' },
+            { name: `The Wanderer's Nest`, price: '₹1,500', rating: '★ 4.4', tag: 'Free Wi-Fi' },
+            { name: `Nomad Cozy Dorms`, price: '₹1,800', rating: '★ 4.5', tag: 'City Center' }
+        ],
+        medium: [
+            { name: `Comfort Suites ${cityName}`, price: '₹4,500', rating: '★ 4.5', tag: 'Free Breakfast' },
+            { name: `Urban Boutique Lodge`, price: '₹5,200', rating: '★ 4.6', tag: 'Pool & Gym' },
+            { name: `Garden Resort & Spa`, price: '₹6,000', rating: '★ 4.7', tag: 'Highly Rated' }
+        ],
+        high: [
+            { name: `The Grand Imperial Palace`, price: '₹15,000', rating: '★ 4.9', tag: 'Luxury Dining' },
+            { name: `Royal Regency & Spa`, price: '₹18,500', rating: '★ 4.8', tag: 'Scenic View' },
+            { name: `Elite Heights Mansion`, price: '₹22,000', rating: '★ 5.0', tag: 'Personal Butler' }
+        ]
+    };
+
+    const selectedHotels = hotelsData[tier];
+    hotelsList.innerHTML = '';
+
+    selectedHotels.forEach(hotel => {
+        const item = document.createElement('div');
+        item.className = 'hotel-item-row';
+        item.innerHTML = `
+            <div class="hotel-info-block">
+                <h5>${hotel.name}</h5>
+                <span class="hotel-tag">${hotel.tag}</span>
+            </div>
+            <div class="hotel-price-block">
+                <span class="hotel-rating">${hotel.rating}</span>
+                <span class="hotel-cost">${hotel.price} <small>/night</small></span>
+            </div>
+        `;
+        hotelsList.appendChild(item);
+    });
+}
 
 // 2. Budget Calculations
 function calculateBudget(dailyRates, tip) {
@@ -1321,14 +1376,25 @@ function calculateBudget(dailyRates, tip) {
     const totalTransit = dailyRates.transit * days * travelers;
     const totalFood = dailyRates.food * days * travelers;
     const totalFun = dailyRates.fun * days * travelers;
-    
+
     const grandTotal = totalStay + totalTransit + totalFood + totalFun;
     const perPerson = Math.round(grandTotal / travelers);
 
+    // Convert to INR to compare with budget limit
+    const usdToInrRate = 83.5;
+    const grandTotalInr = Math.round(grandTotal * usdToInrRate);
+    const perPersonInr = Math.round(perPerson * usdToInrRate);
+
     // Format totals
-    elements.budgetTotal.textContent = `$${grandTotal.toLocaleString()}`;
-    elements.budgetPerPerson.textContent = `For ${travelers} travelers ($${perPerson.toLocaleString()} / person)`;
-    elements.budgetTipText.textContent = tip;
+    elements.budgetTotal.textContent = `$${grandTotal.toLocaleString()} USD (≈ ₹${grandTotalInr.toLocaleString('en-IN')})`;
+    elements.budgetPerPerson.textContent = `For ${travelers} travelers ($${perPerson.toLocaleString()} / person | ≈ ₹${perPersonInr.toLocaleString('en-IN')})`;
+
+    // Check if it exceeds set budget limit
+    if (grandTotalInr > state.budgetLimit) {
+        elements.budgetTipText.innerHTML = `<span style="color:#ef4444; font-weight:700;">⚠️ Budget Exceeded:</span> Your estimated total cost (₹${grandTotalInr.toLocaleString('en-IN')}) exceeds your set budget limit of ₹${state.budgetLimit.toLocaleString('en-IN')}. Consider swapping accommodation types or reducing food/fun budgets. <br>${tip}`;
+    } else {
+        elements.budgetTipText.textContent = tip;
+    }
 
     // Build visual progress bars
     elements.budgetBreakdownBars.innerHTML = '';
@@ -1341,7 +1407,7 @@ function calculateBudget(dailyRates, tip) {
 
     breakdown.forEach(item => {
         const percentage = grandTotal > 0 ? Math.round((item.value / grandTotal) * 100) : 0;
-        
+
         const barEl = document.createElement('div');
         barEl.className = 'expense-item';
         barEl.innerHTML = `
@@ -1372,7 +1438,7 @@ function animateBudgetBars() {
 function seedPackingList(vibe, aiPackingList = null) {
     // Merge base list and vibe specific list
     const categoryList = vibePackingList[vibe] || [];
-    
+
     let aiItems = [];
     if (aiPackingList && Array.isArray(aiPackingList)) {
         aiItems = aiPackingList.map((text, idx) => ({
@@ -1396,11 +1462,11 @@ function seedPackingList(vibe, aiPackingList = null) {
 
 function renderPackingList() {
     elements.packingListContent.innerHTML = '';
-    
+
     // Group items by category
     const categories = ['Essentials', 'Clothing', 'Electronics', 'Documents', 'AI Recommendations'];
     const groups = {};
-    
+
     categories.forEach(cat => {
         groups[cat] = state.packingList.filter(item => item.category === cat);
     });
@@ -1411,10 +1477,10 @@ function renderPackingList() {
 
         const groupEl = document.createElement('div');
         groupEl.className = 'packing-group';
-        
+
         let titleLabel = cat;
         if (cat === 'Clothing') titleLabel = 'Clothing & Gear';
-        
+
         groupEl.innerHTML = `
             <h4>${titleLabel}</h4>
             <div class="checklist-items" id="group-${cat.toLowerCase()}">
@@ -1422,14 +1488,14 @@ function renderPackingList() {
             </div>
         `;
         elements.packingListContent.appendChild(groupEl);
-        
+
         const checklistItemsContainer = groupEl.querySelector(`.checklist-items`);
-        
+
         listItems.forEach(item => {
             const itemEl = document.createElement('div');
             itemEl.className = `checklist-item ${item.checked ? 'checked' : ''}`;
             itemEl.dataset.id = item.id;
-            
+
             itemEl.innerHTML = `
                 <div class="checklist-item-left" onclick="togglePackingItem('${item.id}')">
                     <label class="custom-checkbox-wrapper">
@@ -1451,11 +1517,11 @@ function renderPackingList() {
     updatePackingProgress();
 }
 
-window.togglePackingItem = function(itemId) {
+window.togglePackingItem = function (itemId) {
     const item = state.packingList.find(i => i.id === itemId);
     if (item) {
         item.checked = !item.checked;
-        
+
         // Also update in custom items if it is custom
         const customItem = state.customItems.find(i => i.id === itemId);
         if (customItem) {
@@ -1466,47 +1532,47 @@ window.togglePackingItem = function(itemId) {
     }
 };
 
-window.deletePackingItem = function(event, itemId) {
+window.deletePackingItem = function (event, itemId) {
     event.stopPropagation(); // Avoid double toggling
-    
+
     // Filter out from active lists
     state.packingList = state.packingList.filter(i => i.id !== itemId);
     state.customItems = state.customItems.filter(i => i.id !== itemId);
-    
+
     renderPackingList();
 };
 
 function addCustomPackingItem() {
     const text = elements.customItemInput.value.trim();
     const category = elements.customItemCategory.value;
-    
+
     if (!text) return;
-    
+
     const newItem = {
         text: text,
         category: category,
         checked: false,
         id: 'c_' + Date.now()
     };
-    
+
     // Save to custom items to persist across future regenerations during session
     state.customItems.push(newItem);
-    
+
     // Add to active packing list
     state.packingList.push(newItem);
-    
+
     // Clear input
     elements.customItemInput.value = '';
-    
+
     renderPackingList();
 }
 
 function updatePackingProgress() {
     const total = state.packingList.length;
     const checked = state.packingList.filter(i => i.checked).length;
-    
+
     const percentage = total > 0 ? Math.round((checked / total) * 100) : 0;
-    
+
     elements.packingPercentage.textContent = `${percentage}%`;
     elements.packingFraction.textContent = `${checked} / ${total} Packed`;
     elements.packingProgressBar.style.width = `${percentage}%`;
@@ -1519,17 +1585,17 @@ document.addEventListener('DOMContentLoaded', init);
 
 function saveCurrentItinerary() {
     if (!state.activeDestination) return;
-    
+
     // Get existing saved itineraries
     const saved = JSON.parse(localStorage.getItem('saved_itineraries') || '[]');
-    
+
     // Check if it already exists (by name and duration)
     const exists = saved.some(item => item.name === state.activeDestination.name && item.duration === state.duration);
     if (exists) {
         alert("This itinerary is already saved!");
         return;
     }
-    
+
     // Add current itinerary to list
     const newSaved = {
         id: 'trip_' + Date.now(),
@@ -1547,10 +1613,10 @@ function saveCurrentItinerary() {
         isRealAI: state.activeIsRealAI,
         dateSaved: new Date().toLocaleDateString()
     };
-    
+
     saved.push(newSaved);
     localStorage.setItem('saved_itineraries', JSON.stringify(saved));
-    
+
     // Animate save button or update label
     const btn = document.getElementById('btn-save-itinerary');
     if (btn) {
@@ -1561,17 +1627,17 @@ function saveCurrentItinerary() {
             btn.classList.remove('saved-active');
         }, 2000);
     }
-    
+
     renderSavedTrips();
 }
 
 function renderSavedTrips() {
     const listContainer = document.getElementById('saved-trips-list');
     if (!listContainer) return;
-    
+
     const saved = JSON.parse(localStorage.getItem('saved_itineraries') || '[]');
     listContainer.innerHTML = '';
-    
+
     if (saved.length === 0) {
         listContainer.innerHTML = `
             <div class="saved-trips-empty">
@@ -1584,11 +1650,11 @@ function renderSavedTrips() {
         `;
         return;
     }
-    
+
     saved.forEach(trip => {
         const item = document.createElement('div');
         item.className = 'saved-trip-item';
-        
+
         item.innerHTML = `
             <div class="saved-trip-info" onclick="loadSavedTrip('${trip.id}')">
                 <h4>${trip.name}</h4>
@@ -1606,37 +1672,37 @@ function renderSavedTrips() {
     });
 }
 
-window.loadSavedTrip = function(id) {
+window.loadSavedTrip = function (id) {
     const saved = JSON.parse(localStorage.getItem('saved_itineraries') || '[]');
     const trip = saved.find(t => t.id === id);
     if (!trip) return;
-    
+
     // Set global app state to match this trip
     state.vibe = trip.vibe;
     state.duration = trip.duration;
     state.budget = trip.budget;
     state.travelers = trip.travelers;
-    
+
     // Update inputs to match loaded state
     elements.vibeCards.forEach(c => {
         c.classList.remove('active');
         if (c.dataset.vibe === trip.vibe) c.classList.add('active');
     });
-    
+
     elements.durationSlider.value = trip.duration;
     elements.durationVal.textContent = trip.duration === 1 ? '1 Day' : `${trip.duration} Days`;
-    
+
     elements.budgetBtns.forEach(b => {
         b.classList.remove('active');
         if (b.dataset.budget === trip.budget) b.classList.add('active');
     });
-    
+
     elements.travelersCount.textContent = trip.travelers;
-    
+
     // Populate active destination state
     state.activeDestination = trip;
     state.activeIsRealAI = trip.isRealAI;
-    
+
     // Hide welcome state
     elements.emptyState.classList.add('hidden');
     elements.resultsContainer.classList.remove('hidden');
@@ -1645,14 +1711,14 @@ window.loadSavedTrip = function(id) {
 
     // Call finishGeneration to render it in the results pane
     finishGeneration(trip, trip.isRealAI);
-    
+
     // Scroll results into view on mobile
     if (window.innerWidth < 1024) {
         elements.resultsContainer.scrollIntoView({ behavior: 'smooth' });
     }
 };
 
-window.deleteSavedTrip = function(id) {
+window.deleteSavedTrip = function (id) {
     let saved = JSON.parse(localStorage.getItem('saved_itineraries') || '[]');
     saved = saved.filter(t => t.id !== id);
     localStorage.setItem('saved_itineraries', JSON.stringify(saved));
@@ -1661,25 +1727,25 @@ window.deleteSavedTrip = function(id) {
 
 function downloadPDF() {
     if (!state.activeDestination) return;
-    
+
     const element = document.getElementById('results-container');
     if (!element) return;
-    
+
     // Add temporary styling class for printing
     document.body.classList.add('pdf-printing');
-    
+
     const opt = {
-        margin:       [10, 10, 10, 10],
-        filename:     `VoyageAI_Itinerary_${state.activeDestination.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { 
-            scale: 2, 
-            useCORS: true, 
-            backgroundColor: document.body.classList.contains('light-theme') ? '#ffffff' : '#070a13' 
+        margin: [10, 10, 10, 10],
+        filename: `VoyageAI_Itinerary_${state.activeDestination.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: document.body.classList.contains('light-theme') ? '#ffffff' : '#070a13'
         },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-    
+
     html2pdf().from(element).set(opt).save().then(() => {
         document.body.classList.remove('pdf-printing');
     }).catch(err => {
@@ -1695,54 +1761,54 @@ async function convertCurrency() {
     const toSelect = elements.converterTo;
     const resultBox = elements.converterResult;
     const btnConvert = elements.btnConvert;
-    
+
     if (!amountInput || !fromSelect || !toSelect || !resultBox || !btnConvert) return;
-    
+
     const amount = parseFloat(amountInput.value);
     if (isNaN(amount) || amount <= 0) {
         alert("Please enter a valid amount greater than 0");
         return;
     }
-    
+
     const from = fromSelect.value;
     const to = toSelect.value;
-    
+
     if (from === to) {
         resultBox.classList.remove('hidden');
         resultBox.className = 'converter-result-box';
         resultBox.innerHTML = `
-            <div class="result-detail">${amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${from} =</div>
-            <div class="result-main">${amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${to}</div>
+            <div class="result-detail">${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${from} =</div>
+            <div class="result-main">${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${to}</div>
             <div class="result-rate">1 ${from} = 1.0000 ${to}</div>
         `;
         return;
     }
-    
+
     // Disable Convert button
     btnConvert.disabled = true;
     const originalBtnText = btnConvert.innerHTML;
     btnConvert.innerHTML = `<span class="loader-spinner"></span> Converting...`;
     resultBox.classList.add('hidden');
-    
+
     try {
         const response = await fetch(`https://api.frankfurter.app/latest?amount=${amount}&from=${from}&to=${to}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        
+
         const converted = data.rates[to];
         if (converted === undefined) {
             throw new Error("Target rate not found in API response");
         }
-        
+
         const rate = converted / amount;
-        
+
         resultBox.classList.remove('hidden');
         resultBox.className = 'converter-result-box';
         resultBox.innerHTML = `
-            <div class="result-detail">${amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${from} =</div>
-            <div class="result-main">${converted.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${to}</div>
+            <div class="result-detail">${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${from} =</div>
+            <div class="result-main">${converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${to}</div>
             <div class="result-rate">1 ${from} = ${rate.toFixed(4)} ${to}</div>
         `;
     } catch (err) {
@@ -1757,4 +1823,349 @@ async function convertCurrency() {
         btnConvert.disabled = false;
         btnConvert.innerHTML = originalBtnText;
     }
+}
+
+async function fetchAndRenderWeather(cityName) {
+    const weatherContent = document.getElementById('weather-forecast-content');
+    if (!weatherContent) return;
+
+    weatherContent.innerHTML = `<div class="weather-loading"><span class="loader-spinner"></span> Loading forecast...</div>`;
+
+    try {
+        // Step 1: Geocoding
+        const geoResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=en&format=json`);
+        if (!geoResponse.ok) throw new Error("Geocoding failed");
+
+        const geoData = await geoResponse.json();
+        if (!geoData.results || geoData.results.length === 0) {
+            throw new Error("No location coordinates found");
+        }
+
+        const { latitude, longitude } = geoData.results[0];
+
+        // Update map coordinates dynamically
+        const coordsEl = document.getElementById('map-coords');
+        if (coordsEl) {
+            coordsEl.textContent = `${latitude.toFixed(4)}° N, ${longitude.toFixed(4)}° E`;
+        }
+
+        // Step 2: Weather forecast
+        const weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto`);
+        if (!weatherResponse.ok) throw new Error("Weather forecast failed");
+
+        const weatherData = await weatherResponse.json();
+        const daily = weatherData.daily;
+
+        weatherContent.innerHTML = '';
+
+        // Weather code mapping to simple descriptions/icons
+        const weatherMap = {
+            0: { desc: 'Clear sky', icon: '☀️' },
+            1: { desc: 'Mainly clear', icon: '🌤️' },
+            2: { desc: 'Partly cloudy', icon: '⛅' },
+            3: { desc: 'Overcast', icon: '☁️' },
+            45: { desc: 'Foggy', icon: '🌫️' },
+            48: { desc: 'Depositing rime fog', icon: '🌫️' },
+            51: { desc: 'Light drizzle', icon: '🌧️' },
+            53: { desc: 'Moderate drizzle', icon: '🌧️' },
+            55: { desc: 'Dense drizzle', icon: '🌧️' },
+            61: { desc: 'Slight rain', icon: '🌧️' },
+            63: { desc: 'Moderate rain', icon: '🌧️' },
+            65: { desc: 'Heavy rain', icon: '🌧️' },
+            71: { desc: 'Slight snow', icon: '❄️' },
+            73: { desc: 'Moderate snow', icon: '❄️' },
+            75: { desc: 'Heavy snow', icon: '❄️' },
+            80: { desc: 'Slight showers', icon: '🌦️' },
+            81: { desc: 'Moderate showers', icon: '🌦️' },
+            82: { desc: 'Violent showers', icon: '⛈️' },
+            95: { desc: 'Thunderstorm', icon: '⛈️' }
+        };
+
+        for (let i = 0; i < Math.min(5, daily.time.length); i++) {
+            const dateStr = new Date(daily.time[i]).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+            const maxTemp = Math.round(daily.temperature_2m_max[i]);
+            const minTemp = Math.round(daily.temperature_2m_min[i]);
+            const code = daily.weathercode[i];
+            const weatherDetail = weatherMap[code] || { desc: 'Moderate weather', icon: '⛅' };
+
+            const item = document.createElement('div');
+            item.className = 'weather-item-card';
+            item.innerHTML = `
+                <div class="weather-date">${dateStr}</div>
+                <div class="weather-icon-large">${weatherDetail.icon}</div>
+                <div class="weather-temp-range">
+                    <span class="max-temp">${maxTemp}°C</span>
+                    <span class="min-temp">${minTemp}°C</span>
+                </div>
+                <div class="weather-desc">${weatherDetail.desc}</div>
+            `;
+            weatherContent.appendChild(item);
+        }
+    } catch (err) {
+        console.error("Weather fetch failed:", err);
+        weatherContent.innerHTML = `
+            <div class="weather-error">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="weather-err-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-3.758-3.848 5.25 5.25 0 0 0-10.233 2.33A4.502 4.502 0 0 0 2.25 15Z" />
+                </svg>
+                <p>Weather forecast offline or location geocoding failed. Weather updates are available online.</p>
+            </div>
+        `;
+    }
+}
+
+function copyItineraryToClipboard() {
+    if (!state.activeDestination) return;
+
+    let text = `VOYAGEAI ITINERARY - ${state.activeDestination.name.toUpperCase()}\n`;
+    text += `${state.activeDestination.badge}\n`;
+    text += `${state.activeDestination.description}\n\n`;
+    text += `Duration: ${state.duration} Days\n`;
+    text += `Travelers: ${state.travelers}\n`;
+    text += `Estimated Cost: $${((state.activeDestination.dailyRates.stay + state.activeDestination.dailyRates.transit + state.activeDestination.dailyRates.food + state.activeDestination.dailyRates.fun) * state.duration).toLocaleString()} USD\n\n`;
+
+    state.activeDestination.days.forEach((day, index) => {
+        text += `DAY ${index + 1}: ${day.title}\n`;
+        text += `- Morning: ${day.morning}\n`;
+        text += `- Afternoon: ${day.afternoon}\n`;
+        text += `- Evening: ${day.evening}\n`;
+        if (day.attractions) text += `- Attractions: ${day.attractions.join(', ')}\n`;
+        if (day.restaurants) text += `- Restaurants: ${day.restaurants.join(', ')}\n`;
+        if (day.localFood) text += `- Local Food: ${day.localFood.join(', ')}\n`;
+        if (day.travelTips) text += `- Tip: ${day.travelTips.join(' ')}\n`;
+        text += `\n`;
+    });
+
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('btn-copy-itinerary');
+        if (btn) {
+            const original = btn.innerHTML;
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> <span>Copied!</span>`;
+            showSuccessNotification("Itinerary copied to clipboard!");
+            setTimeout(() => {
+                btn.innerHTML = original;
+            }, 2000);
+        }
+    }).catch(err => {
+        console.error("Clipboard copy failed:", err);
+        alert("Failed to copy itinerary.");
+    });
+}
+
+function showSuccessNotification(message) {
+    const toast = document.getElementById('success-notification');
+    if (toast) {
+        toast.querySelector('span').textContent = message;
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 3000);
+    }
+}
+
+// --- User Feedback & Rating System Features ---
+
+function initUserFeedback() {
+    // 1. Pre-seed baseline ratings if none exist
+    let reviews = JSON.parse(localStorage.getItem('voyage_reviews'));
+    if (!reviews || !Array.isArray(reviews)) {
+        reviews = [
+            { id: 'seed_1', author: 'Aditi S.', rating: 5, comment: 'Amazing planner! The offline mode is super useful.' },
+            { id: 'seed_2', author: 'Rohit K.', rating: 4, comment: 'Very detailed itineraries. The weather feature is spot-on.' },
+            { id: 'seed_3', author: 'Priya M.', rating: 5, comment: 'Loved the currency converter and packing checklist!' }
+        ];
+        localStorage.setItem('voyage_reviews', JSON.stringify(reviews));
+    }
+
+    renderFeedbackSummary();
+    renderReviewForm();
+}
+
+function renderFeedbackSummary() {
+    const reviews = JSON.parse(localStorage.getItem('voyage_reviews') || '[]');
+    const totalReviews = reviews.length;
+
+    const sumRatings = reviews.reduce((sum, item) => sum + item.rating, 0);
+    const avgRating = totalReviews > 0 ? (sumRatings / totalReviews).toFixed(1) : '0.0';
+
+    // Render dynamic text values
+    const avgRatingEl = document.getElementById('avg-rating');
+    const totalReviewsEl = document.getElementById('total-reviews');
+    const avgStarsEl = document.getElementById('avg-stars');
+
+    if (avgRatingEl) avgRatingEl.textContent = avgRating;
+    if (totalReviewsEl) totalReviewsEl.textContent = totalReviews === 1 ? '1 review' : `${totalReviews} reviews`;
+
+    if (avgStarsEl) {
+        const roundedAvg = Math.round(parseFloat(avgRating));
+        let starsHTML = '';
+        for (let i = 1; i <= 5; i++) {
+            if (i <= roundedAvg) {
+                starsHTML += '★';
+            } else {
+                starsHTML += '☆';
+            }
+        }
+        avgStarsEl.textContent = starsHTML;
+    }
+}
+
+function renderReviewForm(editingReview = null) {
+    const container = document.getElementById('review-container');
+    if (!container) return;
+
+    // Check if the user already submitted a review (and is not editing)
+    const reviews = JSON.parse(localStorage.getItem('voyage_reviews') || '[]');
+    const userReview = reviews.find(r => r.id === 'user_review');
+
+    if (userReview && !editingReview) {
+        // Render submitted review view
+        let starsHTML = '';
+        for (let i = 1; i <= 5; i++) {
+            starsHTML += i <= userReview.rating ? '★' : '☆';
+        }
+
+        container.innerHTML = `
+            <div class="user-review-display">
+                <div class="user-review-header">
+                    <span class="user-review-title">Your Feedback</span>
+                    <div class="user-review-stars">${starsHTML}</div>
+                </div>
+                <p class="user-review-text" id="user-review-text"></p>
+                <div class="user-review-actions">
+                    <button type="button" class="btn-review-action edit" id="btn-edit-review">Edit Review</button>
+                    <button type="button" class="btn-review-action delete" id="btn-delete-review">Delete</button>
+                </div>
+            </div>
+        `;
+        // Use textContent to safely prevent XSS injection from local storage text values
+        const textEl = document.getElementById('user-review-text');
+        if (textEl) textEl.textContent = userReview.comment;
+
+        document.getElementById('btn-edit-review').addEventListener('click', () => {
+            renderReviewForm(userReview);
+        });
+        document.getElementById('btn-delete-review').addEventListener('click', deleteUserReview);
+        return;
+    }
+
+    // Render interactive rating input form
+    const ratingValue = editingReview ? editingReview.rating : 0;
+    const commentText = editingReview ? editingReview.comment : '';
+
+    container.innerHTML = `
+        <form id="review-form" onsubmit="event.preventDefault();" style="margin-top: 10px;">
+            <div class="form-group">
+                <label class="form-label">Your Rating</label>
+                <div class="star-rating-input" id="star-rating-input">
+                    <button type="button" class="star-btn" data-value="1">★</button>
+                    <button type="button" class="star-btn" data-value="2">★</button>
+                    <button type="button" class="star-btn" data-value="3">★</button>
+                    <button type="button" class="star-btn" data-value="4">★</button>
+                    <button type="button" class="star-btn" data-value="5">★</button>
+                </div>
+                <input type="hidden" id="selected-rating" value="${ratingValue}">
+            </div>
+            <div class="form-group" style="margin-top: 12px;">
+                <label class="form-label" for="review-comment">Comments</label>
+                <textarea id="review-comment" class="form-input text-area" placeholder="Share your feedback..." rows="3" required></textarea>
+            </div>
+            <button type="button" id="btn-submit-review" class="btn btn-secondary btn-block" style="margin-top: 14px;">
+                ${editingReview ? 'Save Review' : 'Submit Review'}
+            </button>
+        </form>
+    `;
+
+    const commentInput = document.getElementById('review-comment');
+    if (commentInput) commentInput.value = commentText;
+
+    // Star hover & click effects
+    const stars = container.querySelectorAll('.star-btn');
+    const selectedRatingInput = document.getElementById('selected-rating');
+
+    function updateStars(rating) {
+        stars.forEach(s => {
+            const val = parseInt(s.dataset.value);
+            s.classList.toggle('active', val <= rating);
+        });
+    }
+
+    updateStars(ratingValue);
+
+    stars.forEach(star => {
+        // Hover highlights
+        star.addEventListener('mouseover', () => {
+            const hoverValue = parseInt(star.dataset.value);
+            stars.forEach(s => {
+                const val = parseInt(s.dataset.value);
+                s.classList.toggle('hovered', val <= hoverValue);
+            });
+        });
+
+        star.addEventListener('mouseout', () => {
+            stars.forEach(s => s.classList.remove('hovered'));
+        });
+
+        // Click set value
+        star.addEventListener('click', () => {
+            const clickValue = parseInt(star.dataset.value);
+            selectedRatingInput.value = clickValue;
+            updateStars(clickValue);
+        });
+    });
+
+    // Form submit listener
+    const btnSubmit = document.getElementById('btn-submit-review');
+    if (btnSubmit) {
+        btnSubmit.addEventListener('click', submitUserReview);
+    }
+}
+
+function submitUserReview() {
+    const selectedRating = parseInt(document.getElementById('selected-rating').value);
+    const commentInput = document.getElementById('review-comment');
+
+    if (selectedRating === 0) {
+        alert("Please choose a star rating (1 to 5 stars) before submitting!");
+        return;
+    }
+
+    const comment = commentInput ? commentInput.value.trim() : "";
+    if (comment === "") {
+        alert("Please write a short comment feedback!");
+        return;
+    }
+
+    let reviews = JSON.parse(localStorage.getItem('voyage_reviews') || '[]');
+
+    // Upsert user review
+    const existingIndex = reviews.findIndex(r => r.id === 'user_review');
+    const userReview = {
+        id: 'user_review',
+        author: 'You',
+        rating: selectedRating,
+        comment: comment
+    };
+
+    if (existingIndex > -1) {
+        reviews[existingIndex] = userReview;
+    } else {
+        reviews.push(userReview);
+    }
+
+    localStorage.setItem('voyage_reviews', JSON.stringify(reviews));
+
+    showSuccessNotification("Thank you for your rating and feedback!");
+    renderFeedbackSummary();
+    renderReviewForm();
+}
+
+function deleteUserReview() {
+    let reviews = JSON.parse(localStorage.getItem('voyage_reviews') || '[]');
+    reviews = reviews.filter(r => r.id !== 'user_review');
+    localStorage.setItem('voyage_reviews', JSON.stringify(reviews));
+
+    showSuccessNotification("Your review was deleted.");
+    renderFeedbackSummary();
+    renderReviewForm();
 }
